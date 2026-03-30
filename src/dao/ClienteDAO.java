@@ -1,0 +1,146 @@
+package dao;
+
+import factory.ConexionFactory;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import modelo.Cliente;
+
+public class ClienteDAO {
+    private ConexionFactory factory;
+
+    public ClienteDAO() {
+        this.factory = new ConexionFactory();
+    }
+
+    public boolean insertar(Cliente cliente) {
+        String sql = "INSERT INTO Clientes (numero_identidad, nombre, apellido, telefono, correo) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            comando.setString(1, cliente.getNumeroIdentidad());
+            comando.setString(2, cliente.getNombre());
+            comando.setString(3, cliente.getApellido());
+            comando.setString(4, cliente.getTelefono());
+            comando.setString(5, cliente.getCorreo());
+            
+            return comando.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al guardar cliente: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Cliente> listar() {
+        List<Cliente> listaClientes = new ArrayList<>();
+        String sql = "SELECT * FROM Clientes WHERE apellido != 'ELIMINADO'";
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql);
+             ResultSet resultado = comando.executeQuery()) {
+            
+            while (resultado.next()) {
+                Cliente c = new Cliente();
+                c.setIdCliente(resultado.getInt("id_cliente"));
+                c.setNumeroIdentidad(resultado.getString("numero_identidad"));
+                c.setNombre(resultado.getString("nombre"));
+                c.setApellido(resultado.getString("apellido"));
+                c.setTelefono(resultado.getString("telefono"));
+                c.setCorreo(resultado.getString("correo"));
+                listaClientes.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al listar clientes: " + e.getMessage());
+        }
+        return listaClientes;
+    }
+    
+    public List<Cliente> buscar(String texto) {
+        List<Cliente> listaClientes = new ArrayList<>();
+        // Busca coincidencias, pero asegurándose de ignorar a los eliminados
+        String sql = "SELECT * FROM Clientes WHERE apellido != 'ELIMINADO' AND (numero_identidad LIKE ? OR nombre LIKE ? OR apellido LIKE ?)";        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            // Los % le dicen a SQL que busque el texto en cualquier parte de la palabra
+            String parametro = "%" + texto + "%";
+            comando.setString(1, parametro);
+            comando.setString(2, parametro);
+            comando.setString(3, parametro);
+            
+            try (ResultSet resultado = comando.executeQuery()) {
+                while (resultado.next()) {
+                    Cliente c = new Cliente();
+                    c.setIdCliente(resultado.getInt("id_cliente"));
+                    c.setNumeroIdentidad(resultado.getString("numero_identidad"));
+                    c.setNombre(resultado.getString("nombre"));
+                    c.setApellido(resultado.getString("apellido"));
+                    listaClientes.add(c);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error en la búsqueda en vivo: " + e.getMessage());
+        }
+        return listaClientes;
+    }
+
+    public boolean actualizar(Cliente cliente) {
+        String sql = "UPDATE Clientes SET numero_identidad = ?, nombre = ?, apellido = ?, telefono = ?, correo = ? WHERE id_cliente = ?";
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            comando.setString(1, cliente.getNumeroIdentidad());
+            comando.setString(2, cliente.getNombre());
+            comando.setString(3, cliente.getApellido());
+            comando.setString(4, cliente.getTelefono());
+            comando.setString(5, cliente.getCorreo());
+            comando.setInt(6, cliente.getIdCliente());
+            
+            return comando.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar cliente: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean eliminar(int idCliente) {
+        // Usamos CONCAT para que la identidad falsa sea única agregándole el ID al final
+        String sql = "UPDATE Clientes SET numero_identidad = CONCAT('0000-0000-', id_cliente), nombre = '***', apellido = 'ELIMINADO', telefono = '********', correo = '***' WHERE id_cliente = ?";
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            comando.setInt(1, idCliente);
+            return comando.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al eliminar cliente: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    // Este es el método NUEVO que creamos para revisar si el cliente tiene historial
+    public boolean tieneHistorial(int idCliente) {
+        String sql = "SELECT COUNT(*) FROM Equipos_Registrados WHERE id_cliente = ?";
+        try (java.sql.Connection conexion = factory.getConexion();
+             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+             
+            comando.setInt(1, idCliente);
+            java.sql.ResultSet rs = comando.executeQuery();
+            
+            if (rs.next()) {
+                // Si el conteo es mayor a 0, significa que SÍ tiene historial
+                return rs.getInt(1) > 0;
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al comprobar historial del cliente: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    
+}
