@@ -108,15 +108,15 @@ public class PanelClientes extends javax.swing.JPanel {
         jLabel1.setText("REGISTRO CLIENTE");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 20, -1, -1));
 
-        jLabel2.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Nombre");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 270, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 262, -1, 30));
 
-        jLabel4.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Telefono");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 310, -1, -1));
+        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 312, -1, 30));
 
         txtNombre.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 260, 254, -1));
@@ -124,15 +124,15 @@ public class PanelClientes extends javax.swing.JPanel {
         txtTelefono.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jPanel1.add(txtTelefono, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 310, 254, -1));
 
-        jLabel5.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel5.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
         jLabel5.setText("Correo");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 310, -1, -1));
+        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 312, -1, 30));
 
-        jLabel3.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Apellido");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 260, -1, -1));
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 260, -1, 30));
 
         txtApellido.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jPanel1.add(txtApellido, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 260, 250, -1));
@@ -140,48 +140,48 @@ public class PanelClientes extends javax.swing.JPanel {
         txtCorreo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jPanel1.add(txtCorreo, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 310, 250, -1));
 
-        btnEliminar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnEliminar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEliminar.setText("Eliminar");
         btnEliminar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnEliminar.setEnabled(false);
         btnEliminar.addActionListener(this::btnEliminarActionPerformed);
         jPanel1.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 420, -1, 44));
 
-        btnModificar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnModificar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnModificar.setText("Modificar");
         btnModificar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnModificar.setEnabled(false);
         btnModificar.addActionListener(this::btnModificarActionPerformed);
         jPanel1.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 420, -1, 44));
 
-        btnGuardar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnGuardar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnGuardar.setText("Guardar");
         btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnGuardar.addActionListener(this::btnGuardarActionPerformed);
         jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 420, -1, 44));
 
-        jLabel7.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel7.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("Identidad");
-        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 360, -1, -1));
+        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 362, -1, 30));
 
         txtIdentidad.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jPanel1.add(txtIdentidad, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 360, 254, -1));
 
-        jLabel8.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel8.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(255, 255, 255));
         jLabel8.setText("Buscar");
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, -1));
 
-        txtCliente.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtCliente.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtCliente.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtClienteKeyReleased(evt);
             }
         });
-        jPanel1.add(txtCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, 640, -1));
+        jPanel1.add(txtCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 80, 450, -1));
 
-        btnLimpiar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnLimpiar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnLimpiar.setText("Limpiar");
         btnLimpiar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLimpiar.setEnabled(false);

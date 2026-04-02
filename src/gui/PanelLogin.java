@@ -57,12 +57,12 @@ public class PanelLogin extends javax.swing.JPanel {
         jLabel1.setText("BIENVENIDO");
         jPanel2.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(4, 10, 520, -1));
 
-        btnEntrar.setFont(new java.awt.Font("Arial", 0, 36)); // NOI18N
+        btnEntrar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEntrar.setText("Entrar");
         btnEntrar.addActionListener(this::btnEntrarActionPerformed);
-        jPanel2.add(btnEntrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 360, -1, -1));
+        jPanel2.add(btnEntrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 380, 120, 50));
 
-        txtPassword.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtPassword.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtPassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txtPassword.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -71,19 +71,19 @@ public class PanelLogin extends javax.swing.JPanel {
         });
         jPanel2.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 280, 410, -1));
 
-        txtUsuario.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtUsuario.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtUsuario.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         jPanel2.add(txtUsuario, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 190, 410, -1));
 
-        jLabel2.setFont(new java.awt.Font("Arial", 0, 48)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Contraseña");
-        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 230, 410, -1));
+        jPanel2.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 250, 410, -1));
 
-        jLabel3.setFont(new java.awt.Font("Arial", 0, 48)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Nombre de Usuario");
-        jPanel2.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 120, -1, -1));
+        jPanel2.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 160, -1, -1));
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
 

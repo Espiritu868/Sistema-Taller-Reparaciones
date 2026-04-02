@@ -4,13 +4,19 @@ import javax.swing.JOptionPane;
 
 public class PanelEquipos extends javax.swing.JPanel {
     
+    private dao.TipoEquipoDAO tipoDAO;
     private int idClienteSeleccionado = -1;
     private java.util.List<Integer> listaIdTipos = new java.util.ArrayList<>();
     private java.util.List<Integer> listaIdMarcas = new java.util.ArrayList<>();
     public PanelEquipos() {
         initComponents();
         scrollBusqueda.setVisible(false);
-        cargarCombos();
+        
+        // Inicializamos el DAO
+        tipoDAO = new dao.TipoEquipoDAO();
+        
+        // Cargamos los tipos y sincronizamos los IDs
+        cargarTipos();
     }
 
     /**
@@ -29,11 +35,9 @@ public class PanelEquipos extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         txtModelo = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
+        lblIdentificador = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         txtImei = new javax.swing.JTextField();
-        Eliminar = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         btnGuardar = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         txtCliente = new javax.swing.JTextField();
@@ -65,7 +69,7 @@ public class PanelEquipos extends javax.swing.JPanel {
         });
         scrollBusqueda.setViewportView(tablaBusqueda);
 
-        jPanel1.add(scrollBusqueda, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 180, 530, 210));
+        jPanel1.add(scrollBusqueda, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 190, 460, 110));
 
         jLabel1.setFont(new java.awt.Font("Arial", 0, 48)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -75,46 +79,39 @@ public class PanelEquipos extends javax.swing.JPanel {
         jLabel2.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Tipo");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(29, 223, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 230, -1, -1));
 
         jLabel4.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Modelo");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(29, 305, -1, -1));
+        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 320, -1, -1));
 
         txtModelo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jPanel1.add(txtModelo, new org.netbeans.lib.awtextra.AbsoluteConstraints(125, 302, 248, -1));
+        jPanel1.add(txtModelo, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 360, 248, -1));
 
-        jLabel5.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel5.setText("IMEI");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(391, 305, -1, -1));
+        lblIdentificador.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        lblIdentificador.setForeground(new java.awt.Color(255, 255, 255));
+        lblIdentificador.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblIdentificador.setText("IMEI");
+        jPanel1.add(lblIdentificador, new org.netbeans.lib.awtextra.AbsoluteConstraints(457, 320, 260, -1));
 
         jLabel3.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
         jLabel3.setText("Marca");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(393, 229, -1, -1));
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 230, -1, -1));
 
         txtImei.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jPanel1.add(txtImei, new org.netbeans.lib.awtextra.AbsoluteConstraints(477, 302, 254, -1));
-
-        Eliminar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        Eliminar.setText("Eliminar");
-        jPanel1.add(Eliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(492, 391, -1, 44));
-
-        jButton2.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jButton2.setText("Modificar");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(347, 391, -1, 44));
+        jPanel1.add(txtImei, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 360, 254, -1));
 
         btnGuardar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         btnGuardar.setText("Guardar");
         btnGuardar.addActionListener(this::btnGuardarActionPerformed);
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(212, 391, -1, 44));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 420, -1, 44));
 
         jLabel7.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("Buscar Cliente");
-        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(29, 145, -1, -1));
+        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 150, -1, -1));
 
         txtCliente.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         txtCliente.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -122,77 +119,91 @@ public class PanelEquipos extends javax.swing.JPanel {
                 txtClienteKeyReleased(evt);
             }
         });
-        jPanel1.add(txtCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(202, 142, 529, -1));
+        jPanel1.add(txtCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(249, 150, 460, -1));
 
         cmbTipo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jPanel1.add(cmbTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(118, 223, 255, 37));
+        cmbTipo.addActionListener(this::cmbTipoActionPerformed);
+        jPanel1.add(cmbTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 270, 255, 37));
 
         cmbMarca.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jPanel1.add(cmbMarca, new org.netbeans.lib.awtextra.AbsoluteConstraints(477, 223, 254, -1));
+        jPanel1.add(cmbMarca, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 270, 254, -1));
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
 
         jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Background3.jpg"))); // NOI18N
         add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
     }// </editor-fold>//GEN-END:initComponents
-
-    private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // 1. Validar que se haya seleccionado un cliente con la búsqueda en vivo
-        if (idClienteSeleccionado == -1) {
-            JOptionPane.showMessageDialog(this, "Por favor, busque y seleccione un cliente primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // 2. Obtener los IDs de los Combobox usando las listas paralelas
-        // SelectedIndex nos dice qué posición tocó el usuario (0, 1, 2...)
-        int idTipo = listaIdTipos.get(cmbTipo.getSelectedIndex());
-        int idMarca = listaIdMarcas.get(cmbMarca.getSelectedIndex());
-
-        // 3. Capturar Modelo e IMEI/Serie
-        String modeloEquipo = txtModelo.getText().trim();
-        String imeiSerie = txtImei.getText().trim();
-
-        // Si el IMEI viene vacío, le generamos uno único temporal
-        if (imeiSerie.isEmpty() || imeiSerie.equalsIgnoreCase("N/A")) {
-            // Creamos un código único basado en la hora exacta: SN-202603291720
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
-            imeiSerie = "SN-" + sdf.format(new java.util.Date());
-        }
-
-        // 4. Validación básica
-        if (modeloEquipo.isEmpty() || imeiSerie.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El modelo y la serie/IMEI son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // 5. Crear el objeto del Modelo
-        modelo.EquipoRegistrado nuevoEquipo = new modelo.EquipoRegistrado(
-                idClienteSeleccionado, 
-                idTipo, 
-                idMarca, 
-                modeloEquipo, 
-                imeiSerie
-        );
-
-        // 6. Llamar al DAO para guardar
-        dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
-        
-        if (daoEquipo.insertar(nuevoEquipo)) {
-            JOptionPane.showMessageDialog(this, "¡Equipo registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            
-            // 7. Limpiar el formulario
-            txtCliente.setText("");
-            txtModelo.setText("");
-            txtImei.setText("");
-            idClienteSeleccionado = -1; // Reset del cliente
-            scrollBusqueda.setVisible(false); // Ocultar tabla de búsqueda si quedó abierta
-            
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al registrar el equipo en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
     
-    }//GEN-LAST:event_btnGuardarActionPerformed
+    private void cargarTipos() {
+        cmbTipo.removeAllItems();
+        listaIdTipos.clear(); // Limpiamos la lista de IDs
 
+        // Agregamos la opción por defecto y le ponemos un ID falso (-1)
+        cmbTipo.addItem("--- Seleccione Tipo ---");
+        listaIdTipos.add(-1); 
+
+        // Aprovechamos el método listar() que ya tenías creado en tu DAO
+        dao.TipoEquipoDAO daoTipo = new dao.TipoEquipoDAO();
+        for (modelo.TipoEquipo t : daoTipo.listar()) {
+            cmbTipo.addItem(t.getNombreTipo());
+            listaIdTipos.add(t.getIdTipo()); // Guardamos el ID en la misma posición
+        }
+    }
+
+    private void actualizarMarcas() {
+        cmbMarca.removeAllItems();
+        listaIdMarcas.clear();
+
+        // 1. Si no ha seleccionado nada válido, dejamos todo por defecto
+        if (cmbTipo.getSelectedIndex() <= 0) { 
+            cmbMarca.addItem("--- Espere ---");
+            listaIdMarcas.add(-1);
+            lblIdentificador.setText("IMEI / Serie"); // Texto por defecto
+            return;
+        }
+
+        cmbMarca.addItem("--- Seleccione Marca ---");
+        listaIdMarcas.add(-1);
+
+        // Obtenemos el texto y el ID real del tipo que el usuario seleccionó
+        String tipoSeleccionado = cmbTipo.getSelectedItem().toString();
+        int idTipoSeleccionado = listaIdTipos.get(cmbTipo.getSelectedIndex());
+
+        // 2. LA MAGIA DEL LABEL DINÁMICO: Cambiamos el texto de lblIdentificador según el tipo
+        switch (tipoSeleccionado) {
+            case "Smartphones":
+            case "Tablets":
+            case "Smartwatches":
+                lblIdentificador.setText("IMEI");
+                break;
+            case "Computadoras":
+                lblIdentificador.setText("Service Tag / S/N");
+                break;
+            default:
+                // Para Consolas, Audio, Impresoras y cualquier otro futuro
+                lblIdentificador.setText("N° de Serie");
+                break;
+        }
+
+        // 3. Buscamos en la BD las marcas que pertenecen SOLO a ese ID de Tipo
+        String sql = "SELECT id_marca, nombre_marca FROM marcas WHERE id_tipo = ? ORDER BY nombre_marca ASC";
+        
+        try (java.sql.Connection con = new factory.ConexionFactory().getConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idTipoSeleccionado);
+            
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    cmbMarca.addItem(rs.getString("nombre_marca"));
+                    listaIdMarcas.add(rs.getInt("id_marca")); 
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al cargar marcas en cascada: " + e.getMessage());
+        }
+    }
+    
     private void txtClienteKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtClienteKeyReleased
         String texto = txtCliente.getText().trim();
         
@@ -230,25 +241,6 @@ public class PanelEquipos extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_txtClienteKeyReleased
     
-    private void cargarCombos() {
-        // 1. Llenar Tipos
-        dao.TipoEquipoDAO daoTipo = new dao.TipoEquipoDAO();
-        cmbTipo.removeAllItems();
-        listaIdTipos.clear();
-        for (modelo.TipoEquipo t : daoTipo.listar()) {
-            cmbTipo.addItem(t.getNombreTipo());
-            listaIdTipos.add(t.getIdTipo()); // Guardamos el ID en la misma posición
-        }
-
-        // 2. Llenar Marcas
-        dao.MarcaDAO daoMarca = new dao.MarcaDAO();
-        cmbMarca.removeAllItems();
-        listaIdMarcas.clear();
-        for (modelo.Marca m : daoMarca.listar()) {
-            cmbMarca.addItem(m.getNombreMarca());
-            listaIdMarcas.add(m.getIdMarca()); // Guardamos el ID en la misma posición
-        }
-    }
     
     private void tablaBusquedaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaBusquedaMouseClicked
         int fila = tablaBusqueda.getSelectedRow();
@@ -266,21 +258,88 @@ public class PanelEquipos extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_tablaBusquedaMouseClicked
 
+    private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+        // 1. Validar que se haya seleccionado un cliente con la búsqueda en vivo
+        if (idClienteSeleccionado == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, busque y seleccione un cliente primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 2. Obtener los IDs de los Combobox usando las listas paralelas
+        // SelectedIndex nos dice qué posición tocó el usuario (0, 1, 2...)
+        int idTipo = listaIdTipos.get(cmbTipo.getSelectedIndex());
+        int idMarca = listaIdMarcas.get(cmbMarca.getSelectedIndex());
+
+        // 3. Capturar Modelo e IMEI/Serie
+        String modeloEquipo = txtModelo.getText().trim();
+        String imeiSerie = txtImei.getText().trim();
+
+        // Si el IMEI viene vacío, le generamos uno único temporal
+        if (imeiSerie.isEmpty() || imeiSerie.equalsIgnoreCase("N/A")) {
+            // Creamos un código único basado en la hora exacta: SN-202603291720
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+            imeiSerie = "SN-" + sdf.format(new java.util.Date());
+        }
+
+        // 4. Validación básica
+        if (modeloEquipo.isEmpty() || imeiSerie.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El modelo y la serie/IMEI son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // 5. Crear el objeto del Modelo
+        modelo.EquipoRegistrado nuevoEquipo = new modelo.EquipoRegistrado(
+            idClienteSeleccionado,
+            idTipo,
+            idMarca,
+            modeloEquipo,
+            imeiSerie
+        );
+
+        // 6. Llamar al DAO para guardar
+        dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
+
+        if (daoEquipo.insertar(nuevoEquipo)) {
+            JOptionPane.showMessageDialog(this, "¡Equipo registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+            // 7. Limpiar el formulario
+            txtCliente.setText("");
+            txtModelo.setText("");
+            txtImei.setText("");
+            idClienteSeleccionado = -1; // Reset del cliente
+            scrollBusqueda.setVisible(false); // Ocultar tabla de búsqueda si quedó abierta
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al registrar el equipo en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        // Validar que se eligió un tipo y marca válidos (que no sean el índice 0)
+        if (idTipo == -1 || idMarca == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, seleccione un Tipo y una Marca válidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+    }//GEN-LAST:event_btnGuardarActionPerformed
+
+    private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
+
+        actualizarMarcas();
+    
+    }//GEN-LAST:event_cmbTipoActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton Eliminar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JComboBox<String> cmbMarca;
     private javax.swing.JComboBox<String> cmbTipo;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JLabel lblIdentificador;
     private javax.swing.JScrollPane scrollBusqueda;
     private javax.swing.JTable tablaBusqueda;
     private javax.swing.JTextField txtCliente;

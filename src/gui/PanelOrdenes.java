@@ -28,8 +28,6 @@ public class PanelOrdenes extends javax.swing.JPanel {
         scrollBusquedaEquipo = new javax.swing.JScrollPane();
         tablaBusquedaEquipo = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
-        Eliminar = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         btnGuardar = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         txtBuscarEquipo = new javax.swing.JTextField();
@@ -39,6 +37,10 @@ public class PanelOrdenes extends javax.swing.JPanel {
         txtProblema = new javax.swing.JTextArea();
         jLabel8 = new javax.swing.JLabel();
         cmbEstado = new javax.swing.JComboBox<>();
+        jLabel9 = new javax.swing.JLabel();
+        txtEquipo = new javax.swing.JTextField();
+        txtNombre = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
@@ -72,25 +74,18 @@ public class PanelOrdenes extends javax.swing.JPanel {
         jLabel1.setText("CREAR ORDEN");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 10, -1, -1));
 
-        Eliminar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        Eliminar.setText("Eliminar");
-        jPanel1.add(Eliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 440, -1, 44));
-
-        jButton2.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
-        jButton2.setText("Modificar");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 440, -1, 44));
-
-        btnGuardar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnGuardar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnGuardar.setText("Guardar");
+        btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnGuardar.addActionListener(this::btnGuardarActionPerformed);
-        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 440, -1, 44));
+        jPanel1.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 440, -1, 44));
 
         jLabel7.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("Estado:");
         jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 340, -1, -1));
 
-        txtBuscarEquipo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtBuscarEquipo.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtBuscarEquipo.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtBuscarEquipoKeyReleased(evt);
@@ -139,8 +134,38 @@ public class PanelOrdenes extends javax.swing.JPanel {
         jLabel8.setText("Buscar Equipo");
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 70, -1, -1));
 
+        cmbEstado.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         cmbEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "Recibido", "En Revision", "Reparado", "Entregado", "Sin Reparacion" }));
+        cmbEstado.addActionListener(this::cmbEstadoActionPerformed);
         jPanel1.add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 340, 120, 30));
+
+        jLabel9.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel9.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel9.setText("Equipo:");
+        jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 130, -1, -1));
+
+        txtEquipo.setEditable(false);
+        txtEquipo.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtEquipo.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtEquipoKeyReleased(evt);
+            }
+        });
+        jPanel1.add(txtEquipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 130, 200, -1));
+
+        txtNombre.setEditable(false);
+        txtNombre.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtNombreKeyReleased(evt);
+            }
+        });
+        jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 130, 290, -1));
+
+        jLabel10.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        jLabel10.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel10.setText("Cliente:");
+        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 130, -1, -1));
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
 
@@ -195,10 +220,13 @@ public class PanelOrdenes extends javax.swing.JPanel {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void txtBuscarEquipoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarEquipoKeyReleased
+                                            
         String texto = txtBuscarEquipo.getText().trim();
         
         if (texto.isEmpty()) {
             scrollBusquedaEquipo.setVisible(false);
+            txtNombre.setText(""); // Limpiamos la caja nueva
+            txtEquipo.setText(""); // Limpiamos la caja nueva
             return;
         }
 
@@ -225,6 +253,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         } else {
             scrollBusquedaEquipo.setVisible(false);
         }
+    
     }//GEN-LAST:event_txtBuscarEquipoKeyReleased
   
     private void tablaBusquedaEquipoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaBusquedaEquipoMouseClicked
@@ -232,19 +261,19 @@ public class PanelOrdenes extends javax.swing.JPanel {
         
         if (fila >= 0) {
             try {
-                // 1. Usamos la variable global (la que pusiste arriba como -1)
-                // Usamos String.valueOf y luego parseInt para que sea a prueba de errores
+                // 1. ¡MANTENEMOS TU LÓGICA VITAL! Guardamos el ID en tu variable global
                 String idStr = tablaBusquedaEquipo.getValueAt(fila, 0).toString();
                 this.idEquipoSeleccionado = Integer.parseInt(idStr);
                 
-                // 2. Capturamos los datos para mostrar en el buscador
+                // 2. Capturamos los datos de la tabla flotante
                 String modelo = tablaBusquedaEquipo.getValueAt(fila, 1).toString();
                 String dueno = tablaBusquedaEquipo.getValueAt(fila, 3).toString();
                 
-                // 3. Ponemos la info en el TXT para que sepa qué eligió
-                txtBuscarEquipo.setText(modelo + " (Dueño: " + dueno + ")");
+                // 3. Llenamos tus nuevas cajitas grises para que se vea súper Premium
+                txtEquipo.setText(modelo);
+                txtNombre.setText(dueno);
                 
-                // 4. Ocultamos la tabla
+                // 5. Ocultamos la tabla flotante
                 scrollBusquedaEquipo.setVisible(false);
                 
             } catch (Exception e) {
@@ -279,22 +308,36 @@ public class PanelOrdenes extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_txtProblemaFocusLost
 
+    private void cmbEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEstadoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbEstadoActionPerformed
+
+    private void txtEquipoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEquipoKeyReleased
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtEquipoKeyReleased
+
+    private void txtNombreKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNombreKeyReleased
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNombreKeyReleased
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton Eliminar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JComboBox<String> cmbEstado;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane panelProblema;
     private javax.swing.JScrollPane panelTrabajo;
     private javax.swing.JScrollPane scrollBusquedaEquipo;
     private javax.swing.JTable tablaBusquedaEquipo;
     private javax.swing.JTextField txtBuscarEquipo;
+    private javax.swing.JTextField txtEquipo;
+    private javax.swing.JTextField txtNombre;
     private javax.swing.JTextArea txtProblema;
     private javax.swing.JTextArea txtTrabajo;
     // End of variables declaration//GEN-END:variables

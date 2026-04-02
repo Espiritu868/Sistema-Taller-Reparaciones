@@ -17,6 +17,10 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         cargarTablaGeneral();
     }
     
+    // EL NUEVO MÉTODO PARA EL FILTRO
+    // =========================================================================
+    // 1. EL MÉTODO ORIGINAL (El que atiende al abrir la ventana y no pide texto)
+    // =========================================================================
     public void cargarTablaGeneral() {
         dao.OrdenReparacionDAO dao = new dao.OrdenReparacionDAO();
         java.util.List<Object[]> lista = dao.listarReporteCompleto();
@@ -33,14 +37,48 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
             modelo.addRow(fila);
         }
         
-        // Asumiendo que tu tabla se llama tablaGeneral
         tablaGeneral.setModel(modelo);
-        tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);  // N° Orden (Pequeño)
-        tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150); // Cliente
-        tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120); // Equipo
-        tablaGeneral.getColumnModel().getColumn(3).setPreferredWidth(250); // Problema (Grande)
-        tablaGeneral.getColumnModel().getColumn(4).setPreferredWidth(100); // Estado
-        tablaGeneral.getColumnModel().getColumn(5).setPreferredWidth(80);  // Costo
+        tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150);
+        tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120);
+        tablaGeneral.getColumnModel().getColumn(3).setPreferredWidth(250);
+        tablaGeneral.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tablaGeneral.getColumnModel().getColumn(5).setPreferredWidth(80);
+    }
+
+    // =========================================================================
+    // 2. EL MÉTODO NUEVO (El que atiende al ComboBox y SÍ pide un texto de filtro)
+    // =========================================================================
+    public void cargarTablaGeneral(String estadoFiltro) {
+        dao.OrdenReparacionDAO dao = new dao.OrdenReparacionDAO();
+        java.util.List<Object[]> lista;
+        
+        // Evaluamos qué eligió el usuario en el ComboBox
+        if (estadoFiltro.equals("Todos")) {
+            lista = dao.listarReporteCompleto(); // Trae todo
+        } else {
+            lista = dao.filtrarPorEstado(estadoFiltro); // Trae solo el estado seleccionado
+        }
+        
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel();
+        modelo.addColumn("N°");
+        modelo.addColumn("Cliente");
+        modelo.addColumn("Equipo");
+        modelo.addColumn("Problema");
+        modelo.addColumn("Estado");
+        modelo.addColumn("Costo");
+        
+        for (Object[] fila : lista) {
+            modelo.addRow(fila);
+        }
+        
+        tablaGeneral.setModel(modelo);
+        tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150);
+        tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120);
+        tablaGeneral.getColumnModel().getColumn(3).setPreferredWidth(250);
+        tablaGeneral.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tablaGeneral.getColumnModel().getColumn(5).setPreferredWidth(80);
     }
 
     /**
@@ -68,6 +106,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         txtBuscarOrden = new javax.swing.JTextField();
         btnEditarDetalles = new javax.swing.JButton();
         btnEntregar = new javax.swing.JButton();
+        cmbFiltroEstado = new javax.swing.JComboBox<>();
         jLabel6 = new javax.swing.JLabel();
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
@@ -143,7 +182,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
                 txtBuscarOrdenKeyReleased(evt);
             }
         });
-        panelContenedor.add(txtBuscarOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 70, 430, 30));
+        panelContenedor.add(txtBuscarOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 70, 290, 30));
 
         btnEditarDetalles.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEditarDetalles.setText("Editar Detalles");
@@ -154,6 +193,11 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         btnEntregar.setText("Entregar");
         btnEntregar.addActionListener(this::btnEntregarActionPerformed);
         panelContenedor.add(btnEntregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 440, -1, 44));
+
+        cmbFiltroEstado.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        cmbFiltroEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todos", "Recibido", "En Reparacion", "Listo para Entrega", "Entregado" }));
+        cmbFiltroEstado.addItemListener(this::cmbFiltroEstadoItemStateChanged);
+        panelContenedor.add(cmbFiltroEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 70, 130, 30));
 
         jPanel1.add(panelContenedor, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
 
@@ -372,7 +416,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
                 javax.swing.JOptionPane.QUESTION_MESSAGE);
 
         if (confirmacion == javax.swing.JOptionPane.YES_OPTION) {
-            
+                
             dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO(); 
             
             // Convertimos el ID a número para que la base de datos lo entienda
@@ -399,6 +443,14 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_btnEntregarActionPerformed
 
+    private void cmbFiltroEstadoItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbFiltroEstadoItemStateChanged
+
+        String estadoSeleccionado = cmbFiltroEstado.getSelectedItem().toString();
+        // Llamas a tu método de llenar tabla pero pasándole el filtro
+        cargarTablaGeneral(estadoSeleccionado);
+
+    }//GEN-LAST:event_cmbFiltroEstadoItemStateChanged
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnActualizarOrden;
@@ -406,6 +458,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnEntregar;
     private javax.swing.JButton btnGuardar;
+    private javax.swing.JComboBox<String> cmbFiltroEstado;
     private javax.swing.JComboBox<String> cmbNuevoEstado;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

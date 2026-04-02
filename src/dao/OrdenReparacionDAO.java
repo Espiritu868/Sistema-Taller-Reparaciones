@@ -215,4 +215,69 @@ public class OrdenReparacionDAO {
             return false;
         }
     }
+    
+    public List<Object[]> filtrarPorEstado(String estadoFiltro) {
+        List<Object[]> listaReporte = new ArrayList<>();
+        
+        // ¡TU MISMA CONSULTA SQL! Solo le agregamos el WHERE para filtrar
+        String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo " +
+                     "FROM Ordenes_Reparacion o " +
+                     "JOIN Equipos_Registrados e ON o.id_equipo = e.id_equipo " +
+                     "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "WHERE o.estado = ? " + // <-- AQUÍ ESTÁ LA MAGIA DEL FILTRO
+                     "ORDER BY o.fecha_ingreso DESC";
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+             
+            // Le mandamos el estado ("Entregado", "Recibido", etc.) a la consulta
+            comando.setString(1, estadoFiltro);
+            
+            try (ResultSet resultado = comando.executeQuery()) {
+                while (resultado.next()) {
+                    Object[] fila = new Object[6]; 
+
+                    // Tus mismos índices exactos
+                    fila[0] = resultado.getInt("id_orden");
+                    fila[1] = resultado.getString("nombre_completo"); 
+                    fila[2] = resultado.getString("modelo");
+                    fila[3] = resultado.getString("problema_reportado");
+                    fila[4] = resultado.getString("estado");
+                    fila[5] = resultado.getDouble("costo");
+
+                    listaReporte.add(fila);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al filtrar por estado: " + e.getMessage());
+        }
+        return listaReporte;
+    }
+    
+    public String[] buscarDetallesEquipoParaOrden(int idEquipo) {
+        // Un arreglo para guardar [0] = Nombre del Cliente, [1] = Modelo del Equipo
+        String[] detalles = new String[2]; 
+        
+        // Tu magia con JOIN
+        String sql = "SELECT CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo " +
+                     "FROM Equipos_Registrados e " +
+                     "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "WHERE e.id_equipo = ?";
+                     
+        try (java.sql.Connection conexion = factory.getConexion();
+             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+             
+            comando.setInt(1, idEquipo);
+            
+            try (java.sql.ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    detalles[0] = rs.getString("nombre_completo"); // Lo metemos en la posición 0
+                    detalles[1] = rs.getString("modelo");          // Lo metemos en la posición 1
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al buscar detalles del equipo: " + e.getMessage());
+        }
+        return detalles; // Si no lo encuentra, devuelve un arreglo con nulls
+    }
 }

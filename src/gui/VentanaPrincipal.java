@@ -255,6 +255,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true);
+        btnListado.setEnabled(true);
+        btnUsuarios.setEnabled(true);
+        
     }//GEN-LAST:event_btnEstadisticasActionPerformed
 
     private void btnUsuariosKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnUsuariosKeyPressed
@@ -269,6 +272,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true);
+        btnEstadisticas.setEnabled(true);
     }//GEN-LAST:event_btnUsuariosActionPerformed
 
     private void btnListadoKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnListadoKeyPressed
@@ -283,6 +287,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true);
+        btnEstadisticas.setEnabled(true);
+        btnUsuarios.setEnabled(true);
     }//GEN-LAST:event_btnListadoActionPerformed
 
     private void btnOrdenKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnOrdenKeyPressed
@@ -297,6 +303,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnListado.setEnabled(true);
+        btnEstadisticas.setEnabled(true);
+        btnUsuarios.setEnabled(true);
     }//GEN-LAST:event_btnOrdenActionPerformed
 
     private void btnEquiposKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnEquiposKeyPressed
@@ -313,6 +321,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnClientes.setEnabled(true);
         btnOrden.setEnabled(true);
         btnListado.setEnabled(true);
+        btnEstadisticas.setEnabled(true);
+        btnUsuarios.setEnabled(true);
     }//GEN-LAST:event_btnEquiposActionPerformed
 
     private void btnClientesKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnClientesKeyPressed
@@ -329,6 +339,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true);
         btnListado.setEnabled(true);
+        btnEstadisticas.setEnabled(true);
+        btnUsuarios.setEnabled(true);
 
     }//GEN-LAST:event_btnClientesActionPerformed
     

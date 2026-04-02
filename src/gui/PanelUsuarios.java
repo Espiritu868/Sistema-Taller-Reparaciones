@@ -60,21 +60,21 @@ public class PanelUsuarios extends javax.swing.JPanel {
         jLabel1.setText("CREAR USUARIO");
         jPanel3.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(4, 10, 520, -1));
 
-        btnLimpiar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnLimpiar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnLimpiar.setText("Limpiar");
         btnLimpiar.addActionListener(this::btnLimpiarActionPerformed);
-        jPanel3.add(btnLimpiar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 390, 120, -1));
+        jPanel3.add(btnLimpiar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 390, 130, -1));
 
-        txtPassword.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtPassword.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtPassword.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txtPassword.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtPasswordKeyPressed(evt);
             }
         });
-        jPanel3.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 140, 200, -1));
+        jPanel3.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 140, 210, -1));
 
-        txtUsuario.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtUsuario.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         txtUsuario.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         jPanel3.add(txtUsuario, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 140, 200, -1));
 
@@ -92,6 +92,7 @@ public class PanelUsuarios extends javax.swing.JPanel {
         cmbRol.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Administrador", "Tecnico" }));
         jPanel3.add(cmbRol, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 140, -1, -1));
 
+        tablaUsuarios.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         tablaUsuarios.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null},
@@ -120,20 +121,20 @@ public class PanelUsuarios extends javax.swing.JPanel {
 
         jPanel3.add(scrollUsuarios, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 210, -1, 210));
 
-        btnEntrar1.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnEntrar1.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEntrar1.setText("Guardar");
         btnEntrar1.addActionListener(this::btnEntrar1ActionPerformed);
         jPanel3.add(btnEntrar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 210, 130, -1));
 
-        btnModificar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnModificar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnModificar.setText("Modificar");
         btnModificar.addActionListener(this::btnModificarActionPerformed);
-        jPanel3.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 270, -1, -1));
+        jPanel3.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 270, 130, -1));
 
-        btnEliminar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnEliminar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEliminar.setText("Eliminar");
         btnEliminar.addActionListener(this::btnEliminarActionPerformed);
-        jPanel3.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 330, 120, -1));
+        jPanel3.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 330, 130, -1));
 
         jPanel2.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
 
