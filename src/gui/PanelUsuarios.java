@@ -4,11 +4,21 @@
  */
 package gui;
 
-import java.awt.Window;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.KeyEvent;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 /**
  *
  * @author Ever Chavez
@@ -21,6 +31,7 @@ public class PanelUsuarios extends javax.swing.JPanel {
     public PanelUsuarios() {
         initComponents();
         cargarTablaUsuarios();
+        aplicarDisenoUsuarios(); // ¡LA MAGIA VISUAL!
     }
 
     /**
@@ -62,6 +73,7 @@ public class PanelUsuarios extends javax.swing.JPanel {
 
         btnLimpiar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnLimpiar.setText("Limpiar");
+        btnLimpiar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLimpiar.addActionListener(this::btnLimpiarActionPerformed);
         jPanel3.add(btnLimpiar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 390, 130, -1));
 
@@ -123,16 +135,19 @@ public class PanelUsuarios extends javax.swing.JPanel {
 
         btnEntrar1.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEntrar1.setText("Guardar");
+        btnEntrar1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnEntrar1.addActionListener(this::btnEntrar1ActionPerformed);
         jPanel3.add(btnEntrar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 210, 130, -1));
 
         btnModificar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnModificar.setText("Modificar");
+        btnModificar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnModificar.addActionListener(this::btnModificarActionPerformed);
         jPanel3.add(btnModificar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 270, 130, -1));
 
         btnEliminar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
         btnEliminar.setText("Eliminar");
+        btnEliminar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnEliminar.addActionListener(this::btnEliminarActionPerformed);
         jPanel3.add(btnEliminar, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 330, 130, -1));
 
@@ -183,7 +198,94 @@ public class PanelUsuarios extends javax.swing.JPanel {
                     .addGap(0, 0, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
+    
+    private void aplicarDisenoUsuarios() {
+        // 1. Borramos el diseño viejo y oscuro de NetBeans
+        this.removeAll();
+        this.setLayout(new BorderLayout(20, 20));
+        this.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        this.setBackground(new Color(240, 244, 248)); // Fondo gris claro web
 
+        // 2. TÍTULO SUPERIOR
+        JLabel lblTitulo = new JLabel("Gestión de Usuarios");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTitulo.setForeground(new Color(44, 62, 80));
+        this.add(lblTitulo, BorderLayout.NORTH);
+
+        // 3. ZONA IZQUIERDA: ESTILIZAR LA TABLA QUE YA TIENES
+        tablaUsuarios.setRowHeight(35);
+        tablaUsuarios.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tablaUsuarios.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tablaUsuarios.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        scrollUsuarios.getViewport().setBackground(Color.WHITE);
+        scrollUsuarios.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+
+        // 4. ZONA DERECHA: EL FORMULARIO MODERNO
+        JPanel panelFormulario = new JPanel(new GridBagLayout());
+        panelFormulario.setBackground(Color.WHITE);
+        panelFormulario.setPreferredSize(new Dimension(350, 0)); // Ancho fijo a la derecha
+        panelFormulario.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 220, 220)),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 0, 5, 0); // Márgenes
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+        // Título del formulario
+        JLabel lblSub = new JLabel("Datos del Usuario");
+        lblSub.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblSub.setForeground(Color.GRAY);
+        gbc.gridy = 0;
+        panelFormulario.add(lblSub, gbc);
+
+        // Usamos TUS cajas de texto generadas por NetBeans
+        gbc.gridy++; panelFormulario.add(new JLabel("Nombre de Usuario:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtUsuario, gbc);
+
+        gbc.gridy++; panelFormulario.add(new JLabel("Contraseña:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtPassword, gbc);
+
+        gbc.gridy++; panelFormulario.add(new JLabel("Rol del Sistema:"), gbc);
+        gbc.gridy++; panelFormulario.add(cmbRol, gbc);
+
+        // Espacio antes de los botones
+        gbc.gridy++; gbc.insets = new Insets(25, 0, 0, 0);
+
+        // Panel para agrupar TUS botones en una cuadrícula 2x2
+        JPanel panelBotones = new JPanel(new GridLayout(2, 2, 10, 10));
+        panelBotones.setOpaque(false);
+
+        // Estilizamos tus botones con colores FlatLaf modernos
+        btnEntrar1.setText("Guardar"); 
+        btnEntrar1.setBackground(new Color(46, 204, 113)); btnEntrar1.setForeground(Color.WHITE);
+        
+        btnModificar.setBackground(new Color(52, 152, 219)); btnModificar.setForeground(Color.WHITE);
+        btnEliminar.setBackground(new Color(231, 76, 60)); btnEliminar.setForeground(Color.WHITE);
+        btnLimpiar.setBackground(Color.GRAY); btnLimpiar.setForeground(Color.WHITE);
+
+        panelBotones.add(btnEntrar1);
+        panelBotones.add(btnModificar);
+        panelBotones.add(btnEliminar);
+        panelBotones.add(btnLimpiar);
+
+        gbc.gridy++; panelFormulario.add(panelBotones, gbc);
+
+        // Empujar todo hacia arriba
+        gbc.gridy++; gbc.weighty = 1.0;
+        panelFormulario.add(Box.createVerticalGlue(), gbc);
+
+        // 5. ENSAMBLAR TODO EN EL PANEL PRINCIPAL
+        this.add(scrollUsuarios, BorderLayout.CENTER); // Tabla al centro (toma el resto del espacio)
+        this.add(panelFormulario, BorderLayout.EAST);  // Formulario pegado a la derecha
+
+        this.revalidate();
+        this.repaint();
+    }
+    
     private void cargarTablaUsuarios() {
         javax.swing.table.DefaultTableModel modeloTabla = (javax.swing.table.DefaultTableModel) tablaUsuarios.getModel();
         modeloTabla.setRowCount(0); // Limpiamos la tabla antes de llenarla
@@ -201,42 +303,11 @@ public class PanelUsuarios extends javax.swing.JPanel {
     }
     
     private void btnLimpiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarActionPerformed
-        String usuario = txtUsuario.getText().trim();
-        // Así se extrae el texto de un campo de contraseña de forma segura
-        String password = new String(txtPassword.getPassword());
-
-        // Validación rápida de campos vacíos
-        if (usuario.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor ingrese usuario y contraseña.", "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Llamamos a nuestro conductor de base de datos
-        dao.UsuarioDAO daoAcceso = new dao.UsuarioDAO();
-
-        // ¡LA MAGIA NUEVA! Ahora guardamos la palabra (el Rol) que nos devuelve el DAO
-        String rolUsuario = daoAcceso.validarLogin(usuario, password);
-
-        // Si el resultado NO es "ERROR", ¡significa que la contraseña es correcta y pasamos!
-        if (!rolUsuario.equals("ERROR")) {
-
-            // Un mensajito elegante para saber quién entró
-            JOptionPane.showMessageDialog(this, "¡Bienvenido al sistema, " + rolUsuario + "!", "Acceso Concedido", JOptionPane.INFORMATION_MESSAGE);
-
-            // Buscamos la VentanaPrincipal que contiene este panel
-            Window ventana = SwingUtilities.getWindowAncestor(this);
-
-            // Le damos la orden de encender el sistema
-            if (ventana instanceof VentanaPrincipal) {
-                ((VentanaPrincipal) ventana).habilitarSistema(rolUsuario);
-            }
-
-        } else {
-            // Si nos devolvió "ERROR", regañamos y limpiamos
-            JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Acceso Denegado", JOptionPane.ERROR_MESSAGE);
-            txtPassword.setText(""); // Limpiamos la contraseña
-            txtUsuario.requestFocus(); // Regresamos el cursor arriba
-        }
+        txtUsuario.setText("");
+        txtPassword.setText("");
+        cmbRol.setSelectedIndex(0);
+        tablaUsuarios.clearSelection();
+        txtUsuario.requestFocus();
     }//GEN-LAST:event_btnLimpiarActionPerformed
 
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed

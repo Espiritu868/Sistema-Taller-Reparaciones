@@ -7,12 +7,14 @@ public class PanelClientes extends javax.swing.JPanel {
     public PanelClientes() {
         
         initComponents();
+        this.setSize(1200, 750);
         cargarTablaClientes("");
+        aplicarDisenoClientes();
     }
     // Método para llenar la tabla principal de clientes
     private void cargarTablaClientes(String textoBusqueda) {
         dao.ClienteDAO dao = new dao.ClienteDAO();
-        java.util.List<modelo.Cliente> lista;
+        java.util.List<modelo.Cliente> lista;   
         
         // Si no hay texto de búsqueda, mostramos todos. Si hay texto, usamos la búsqueda en vivo.
         if (textoBusqueda.isEmpty()) {
@@ -21,8 +23,14 @@ public class PanelClientes extends javax.swing.JPanel {
             lista = dao.buscar(textoBusqueda);
         }
         
-        // Preparamos las columnas exactas
-        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel();
+        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+
+        // --- 2. AGREGAMOS LAS COLUMNAS ---
         modeloTabla.addColumn("ID");
         modeloTabla.addColumn("Identidad");
         modeloTabla.addColumn("Nombre");
@@ -44,6 +52,30 @@ public class PanelClientes extends javax.swing.JPanel {
         
         // Se lo aplicamos a tu tabla visual
         tablaClientes.setModel(modeloTabla);
+        // --- NUEVO: Ajuste visual de las columnas ---
+        // Le damos el ancho ideal a cada columna (en píxeles) para que todo se lea perfecto
+        if (tablaClientes.getColumnModel().getColumnCount() > 0) {
+            tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(40);  // ID (Pequeño)
+            tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(130); // Identidad
+            tablaClientes.getColumnModel().getColumn(2).setPreferredWidth(140); // Nombre
+            tablaClientes.getColumnModel().getColumn(3).setPreferredWidth(140); // Apellido
+            tablaClientes.getColumnModel().getColumn(4).setPreferredWidth(100); // Teléfono
+            tablaClientes.getColumnModel().getColumn(5).setPreferredWidth(200); // Correo (El más grande)
+        }
+        
+        // --- NUEVO: Ajuste visual de las columnas ---
+        if (tablaClientes.getColumnModel().getColumnCount() > 0) {
+            tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(50);  
+            tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(150); 
+            tablaClientes.getColumnModel().getColumn(2).setPreferredWidth(160); 
+            tablaClientes.getColumnModel().getColumn(3).setPreferredWidth(160); 
+            tablaClientes.getColumnModel().getColumn(4).setPreferredWidth(120); 
+            tablaClientes.getColumnModel().getColumn(5).setPreferredWidth(250); 
+            
+            // ¡ESTA ES LA LÍNEA MÁGICA! Le prohíbe a Java aplastar las celdas
+            tablaClientes.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF); 
+        }
+       
     }
 
     /**
@@ -118,10 +150,10 @@ public class PanelClientes extends javax.swing.JPanel {
         jLabel4.setText("Telefono");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 312, -1, 30));
 
-        txtNombre.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtNombre.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtNombre, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 260, 254, -1));
 
-        txtTelefono.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtTelefono.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtTelefono, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 310, 254, -1));
 
         jLabel5.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
@@ -134,10 +166,10 @@ public class PanelClientes extends javax.swing.JPanel {
         jLabel3.setText("Apellido");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 260, -1, 30));
 
-        txtApellido.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtApellido.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtApellido, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 260, 250, -1));
 
-        txtCorreo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtCorreo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtCorreo, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 310, 250, -1));
 
         btnEliminar.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
@@ -165,7 +197,7 @@ public class PanelClientes extends javax.swing.JPanel {
         jLabel7.setText("Identidad");
         jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 362, -1, 30));
 
-        txtIdentidad.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtIdentidad.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtIdentidad, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 360, 254, -1));
 
         jLabel8.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
@@ -413,7 +445,121 @@ public class PanelClientes extends javax.swing.JPanel {
         cargarTablaClientes("");
     }//GEN-LAST:event_btnLimpiarActionPerformed
 
+    // ==============================================================
+    // NUEVO DISEÑO MODERNO: PANEL DE CLIENTES
+    // ==============================================================
+    private void aplicarDisenoClientes() {
+        // 1. Borramos el diseño oscuro viejo
+        this.removeAll();
+        this.setLayout(new java.awt.BorderLayout(20, 20));
+        this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        this.setBackground(new java.awt.Color(240, 244, 248)); // Fondo gris claro
 
+        // 2. TÍTULO SUPERIOR
+        javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Gestión de Clientes");
+        lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
+        this.add(lblTitulo, java.awt.BorderLayout.NORTH);
+
+        // 3. ZONA IZQUIERDA: BUSCADOR Y TABLA
+        javax.swing.JPanel panelIzquierdo = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
+        panelIzquierdo.setOpaque(false);
+        
+        // --- El Buscador ---
+        javax.swing.JPanel panelBuscador = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        panelBuscador.setOpaque(false);
+        javax.swing.JLabel lblBuscar = new javax.swing.JLabel("Buscar Cliente (Nombre o Identidad):");
+        lblBuscar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        txtCliente.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14)); // Este es tu campo de búsqueda
+        txtCliente.setPreferredSize(new java.awt.Dimension(0, 35));
+        panelBuscador.add(lblBuscar, java.awt.BorderLayout.WEST);
+        panelBuscador.add(txtCliente, java.awt.BorderLayout.CENTER);
+        
+        // --- La Tabla ---
+        tablaClientes.setRowHeight(35);
+        tablaClientes.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        tablaClientes.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        scrollBusqueda.getViewport().setBackground(java.awt.Color.WHITE);
+        scrollBusqueda.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200)));
+
+        panelIzquierdo.add(panelBuscador, java.awt.BorderLayout.NORTH);
+        panelIzquierdo.add(scrollBusqueda, java.awt.BorderLayout.CENTER);
+        this.add(panelIzquierdo, java.awt.BorderLayout.CENTER); // El panel izquierdo toma todo el espacio central
+
+        // 4. ZONA DERECHA: FORMULARIO BLANCO
+        javax.swing.JPanel panelFormulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panelFormulario.setBackground(java.awt.Color.WHITE);
+        panelFormulario.setPreferredSize(new java.awt.Dimension(300, 0));
+        panelFormulario.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)),
+                javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.insets = new java.awt.Insets(5, 0, 2, 0); // Márgenes más pequeños porque hay muchos campos
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+        javax.swing.JLabel lblSub = new javax.swing.JLabel("Datos del Cliente");
+        lblSub.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        lblSub.setForeground(java.awt.Color.GRAY);
+        gbc.gridy = 0; gbc.insets = new java.awt.Insets(0, 0, 15, 0);
+        panelFormulario.add(lblSub, gbc);
+
+        // Agregamos tus campos generados por NetBeans al form
+        gbc.insets = new java.awt.Insets(5, 0, 2, 0);
+        gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Identidad:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtIdentidad, gbc);
+
+        gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Nombre:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtNombre, gbc);
+
+        gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Apellido:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtApellido, gbc);
+
+        gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Teléfono:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtTelefono, gbc);
+
+        gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Correo:"), gbc);
+        gbc.gridy++; panelFormulario.add(txtCorreo, gbc);
+
+        // Panel de Botones 2x2
+        gbc.gridy++; gbc.insets = new java.awt.Insets(20, 0, 0, 0);
+        javax.swing.JPanel panelBotones = new javax.swing.JPanel(new java.awt.GridLayout(2, 2, 10, 10));
+        panelBotones.setOpaque(false);
+
+        // Estilos y "Manitas" de los botones
+        btnGuardar.setBackground(new java.awt.Color(46, 204, 113)); btnGuardar.setForeground(java.awt.Color.WHITE);
+        btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        btnModificar.setBackground(new java.awt.Color(52, 152, 219)); btnModificar.setForeground(java.awt.Color.WHITE);
+        btnModificar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        btnEliminar.setBackground(new java.awt.Color(231, 76, 60)); btnEliminar.setForeground(java.awt.Color.WHITE);
+        btnEliminar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        btnLimpiar.setBackground(java.awt.Color.GRAY); btnLimpiar.setForeground(java.awt.Color.WHITE);
+        btnLimpiar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        panelBotones.add(btnGuardar);
+        panelBotones.add(btnModificar);
+        panelBotones.add(btnEliminar);
+        panelBotones.add(btnLimpiar);
+
+        gbc.gridy++; panelFormulario.add(panelBotones, gbc);
+
+        // Empujamos todo hacia arriba para que no flote
+        gbc.gridy++; gbc.weighty = 1.0;
+        panelFormulario.add(javax.swing.Box.createVerticalGlue(), gbc);
+
+        // Agregamos el formulario a la derecha de la pantalla
+        this.add(panelFormulario, java.awt.BorderLayout.EAST);
+
+        this.revalidate();
+        this.repaint();
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnGuardar;

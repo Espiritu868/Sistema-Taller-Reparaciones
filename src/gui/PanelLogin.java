@@ -1,9 +1,29 @@
 package gui;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
 /**
  *
  * @author Ever Chavez
@@ -13,8 +33,16 @@ public class PanelLogin extends javax.swing.JPanel {
     /**
      * Creates new form PanelLogin
      */
+    // --- VARIABLES PARA LA ANIMACIÓN DE BURBUJAS ---
+    private List<Burbuja> burbujas = new ArrayList<>();
+    private Timer timerAnimacion;
+    private int mouseX = -1000; // Lo empezamos fuera de la pantalla
+    private int mouseY = -1000;
+    
     public PanelLogin() {
         initComponents();
+        aplicarDisenoLogin();
+        iniciarMotorBurbujas();
     }
 
     /**
@@ -33,6 +61,66 @@ public class PanelLogin extends javax.swing.JPanel {
     // End of variables declaration                   
 
     @SuppressWarnings("unchecked")
+    // ==============================================================
+    // EL MOLDE DE LAS BURBUJAS FLOTANTES
+    // ==============================================================
+    private class Burbuja {
+        double x, y;
+        double radio;
+        double dx, dy; // Velocidad de movimiento en X y en Y
+        Color color;
+
+        public Burbuja() {
+            // Tamaño y color aleatorio (Azul semitransparente)
+            radio = Math.random() * 30 + 10;
+            color = new Color(52, 152, 219, (int)(Math.random() * 40 + 20)); // El 20-60 es la transparencia
+            
+            // Posición inicial aleatoria (asumimos una pantalla grande)
+            x = Math.random() * 1920;
+            y = Math.random() * 1080;
+            
+            // Velocidad de flote inicial lenta
+            dx = (Math.random() - 0.5) * 1.5;
+            dy = (Math.random() - 0.5) * 1.5;
+        }
+
+        public void mover(int anchoPantalla, int altoPantalla, int mX, int mY) {
+            // Si la ventana aún no carga, no hacemos cálculos
+            if (anchoPantalla == 0) return;
+
+            // FÍSICA 1: Flote natural (avanzar)
+            x += dx;
+            y += dy;
+
+            // FÍSICA 2: Rebotar contra las paredes
+            if (x - radio < 0 || x + radio > anchoPantalla) dx *= -1;
+            if (y - radio < 0 || y + radio > altoPantalla) dy *= -1;
+
+            // FÍSICA 3: Miedo al Mouse (Repulsión)
+            // Calculamos qué tan cerca está la burbuja del cursor
+            double distanciaAlMouse = Math.hypot(x - mX, y - mY);
+            
+            if (distanciaAlMouse < 150) { // Si el mouse se acerca a menos de 150px
+                double fuerzaRepulsion = (150 - distanciaAlMouse) / 100.0;
+                dx += (x - mX) / distanciaAlMouse * fuerzaRepulsion;
+                dy += (y - mY) / distanciaAlMouse * fuerzaRepulsion;
+                
+                // Límite de velocidad máxima al huir (para que no salgan volando a la luna)
+                double velocidad = Math.hypot(dx, dy);
+                if (velocidad > 6) {
+                    dx = (dx / velocidad) * 6;
+                    dy = (dy / velocidad) * 6;
+                }
+            } else {
+                // Si el mouse está lejos, la burbuja se relaja y frena poco a poco
+                double velocidad = Math.hypot(dx, dy);
+                if (velocidad > 1.5) {
+                    dx *= 0.95;
+                    dy *= 0.95;
+                }
+            }
+        }
+    }
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -140,7 +228,7 @@ public class PanelLogin extends javax.swing.JPanel {
             
             // Le damos la orden de encender el sistema
             if (ventana instanceof VentanaPrincipal) {
-                ((VentanaPrincipal) ventana).habilitarSistema(rolUsuario);
+                ((VentanaPrincipal) ventana).habilitarSistema(rolUsuario, usuario);
             }
             
         } else {
@@ -150,7 +238,139 @@ public class PanelLogin extends javax.swing.JPanel {
             txtUsuario.requestFocus(); // Regresamos el cursor arriba
         }
     }//GEN-LAST:event_btnEntrarActionPerformed
+    
+    private void aplicarDisenoLogin() {
+        this.removeAll();
+        this.setLayout(new GridBagLayout()); 
+        this.setOpaque(false); // Fondo transparente para ver las burbujas
 
+        JPanel cajaLogin = new JPanel(new GridBagLayout());
+        cajaLogin.setBackground(Color.WHITE);
+        cajaLogin.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                BorderFactory.createEmptyBorder(40, 50, 40, 50) 
+        ));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 0, 5, 0);
+
+        // Título
+        JLabel lblTitulo = new JLabel("BIENVENIDO", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        lblTitulo.setForeground(new Color(44, 62, 80));
+        cajaLogin.add(lblTitulo, gbc);
+
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 0, 30, 0); 
+        JLabel lblSub = new JLabel("Sistema Operativo Sairtech", SwingConstants.CENTER);
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblSub.setForeground(Color.GRAY);
+        cajaLogin.add(lblSub, gbc);
+
+        // Usuario
+        gbc.gridy++;
+        gbc.insets = new Insets(5, 0, 5, 0);
+        JLabel lblUser = new JLabel("Nombre de Usuario:");
+        lblUser.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblUser.setForeground(new Color(44, 62, 80));
+        cajaLogin.add(lblUser, gbc);
+
+        gbc.gridy++;
+        txtUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        txtUsuario.setPreferredSize(new Dimension(300, 40));
+        cajaLogin.add(txtUsuario, gbc);
+
+        // Contraseña
+        gbc.gridy++;
+        gbc.insets = new Insets(15, 0, 5, 0);
+        JLabel lblPass = new JLabel("Contraseña:");
+        lblPass.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblPass.setForeground(new Color(44, 62, 80));
+        cajaLogin.add(lblPass, gbc);
+
+        gbc.gridy++;
+        gbc.insets = new Insets(5, 0, 30, 0); 
+        txtPassword.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        txtPassword.setPreferredSize(new Dimension(300, 40));
+        cajaLogin.add(txtPassword, gbc);
+
+        // Botón Entrar
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        btnEntrar.setText("Ingresar al Sistema");
+        btnEntrar.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnEntrar.setBackground(new Color(52, 152, 219)); 
+        btnEntrar.setForeground(Color.WHITE);
+        btnEntrar.setPreferredSize(new Dimension(300, 45));
+        btnEntrar.setCursor(new Cursor(Cursor.HAND_CURSOR)); 
+        cajaLogin.add(btnEntrar, gbc);
+
+        this.add(cajaLogin);
+        this.revalidate();
+        this.repaint();
+    }
+    // ==============================================================
+    // EL MOTOR DE LAS BURBUJAS FLOTANTES
+    // ==============================================================
+    private void iniciarMotorBurbujas() {
+        // 1. Creamos 35 burbujas invisibles al principio y las metemos a la lista
+        for (int i = 0; i < 300; i++) {
+            burbujas.add(new Burbuja());
+        }
+
+        // 2. El Radar: Escuchamos dónde está el mouse en todo momento
+        this.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+            }
+        });
+
+        // 3. Si el mouse sale de la ventana, lo "escondemos" para que las burbujas no le huyan a la nada
+        this.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                mouseX = -1000;
+                mouseY = -1000;
+            }
+        });
+
+        // 4. EL CORAZÓN DEL MOTOR: Un reloj que corre a ~60 FPS (cada 16 milisegundos)
+        timerAnimacion = new javax.swing.Timer(16, e -> {
+            // Le decimos a cada burbuja que calcule su nueva posición
+            for (Burbuja b : burbujas) {
+                b.mover(getWidth(), getHeight(), mouseX, mouseY);
+            }
+            // Obligamos a Java a borrar la pantalla y volver a dibujar todo
+            repaint(); 
+        });
+        timerAnimacion.start(); // ¡Que empiece el juego!
+    }
+    
+    // Este es un método nativo de Java que estamos sobrescribiendo
+    @Override
+    protected void paintComponent(java.awt.Graphics g) {
+        super.paintComponent(g); // Dejamos que Java haga su trabajo básico
+        java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+        
+        // Activamos el "Antialiasing" para que los círculos sean suaves y no se vean pixelados
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // 1. Dibujamos nuestro fondo gris sólido a mano
+        g2.setColor(new java.awt.Color(240, 244, 248));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+
+        // 2. Dibujamos cada una de las 35 burbujas en su posición actual
+        for (Burbuja b : burbujas) {
+            g2.setColor(b.color);
+            // fillOval dibuja círculos. Las matemáticas raras son para que la coordenada (x,y) sea el centro del círculo
+            g2.fillOval((int) (b.x - b.radio), (int) (b.y - b.radio), (int) (b.radio * 2), (int) (b.radio * 2));
+        }
+    }
+    
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
         // Si el usuario presiona la tecla ENTER estando en la contraseña...
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {

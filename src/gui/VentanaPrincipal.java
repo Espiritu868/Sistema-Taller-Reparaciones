@@ -12,6 +12,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     public VentanaPrincipal() {
         initComponents();
         this.setLocationRelativeTo(null); // Centrar la ventana
+        aplicarDisenoPrincipal(); // <-- ¡NUEVA LÍNEA AQUÍ!
         
         // 1. Apagamos todos los botones del menú lateral
         btnClientes.setEnabled(false);
@@ -30,8 +31,12 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     
     // Método público para que el PanelLogin pueda encender el sistema
     // Método público para que el PanelLogin pueda encender el sistema
-    public void habilitarSistema(String rol) {
-        // 1. Encendemos los botones generales que TODOS pueden usar
+    public void habilitarSistema(String rol, String nombreUsuario) { 
+        
+        // Actualizamos el perfil en el menú lateral
+        lblPerfil.setText(nombreUsuario + " | " + rol);
+
+        // 1. Encendemos los botones generales
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true); 
@@ -47,14 +52,9 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             btnUsuarios.setVisible(false);
         }
         
-        // 3. ¡CAMBIO AQUÍ! Quitamos el panel de clientes y ponemos el de Estadísticas
-        // Creamos la instancia de tu nuevo panel moderno
+        // 3. Mandamos al usuario al Dashboard (Estadísticas)
         PanelEstadisticas dashboard = new PanelEstadisticas(); 
-        
-        // Lo mandamos al contenedor central
         mostrarPanel(dashboard); 
-        
-        // Bloqueamos el botón de estadísticas para indicar que estamos ahí
         seleccionarBotonMenu(btnEstadisticas); 
     }
     
@@ -73,16 +73,18 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
     // Este método recibe el botón que acabas de presionar y ajusta todos los demás
     private void seleccionarBotonMenu(javax.swing.JButton botonActivo) {
-        // 1. Primero, DESBLOQUEAMOS todos los botones del menú para que se puedan volver a usar
+        // 1. Primero, ENCENDEMOS absolutamente todos los botones
+        btnEstadisticas.setEnabled(true);
         btnClientes.setEnabled(true);
-        
-        // Cuando crees los otros botones en tu diseño, solo quítales las barras (//)
-        // btnEquipos.setEnabled(true); 
-        // btnOrdenes.setEnabled(true);
-        // btnInventario.setEnabled(true);
+        btnEquipos.setEnabled(true);
+        btnOrden.setEnabled(true);
+        btnListado.setEnabled(true);
+        btnUsuarios.setEnabled(true);
 
-        // 2. Por último, BLOQUEAMOS únicamente el botón en el que estamos actualmente
-        botonActivo.setEnabled(false);
+        // 2. Apagamos (bloqueamos) ÚNICAMENTE el botón en el que estamos ahorita
+        if (botonActivo != null) {
+            botonActivo.setEnabled(false);
+        }
     }
 
     /**
@@ -370,7 +372,85 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         });
     }
     
-    
+    // ==============================================================
+    // NUEVO DISEÑO: MENÚ LATERAL (SIDEBAR)
+    // ==============================================================
+    private void aplicarDisenoPrincipal() {
+        // 1. Limpiamos la ventana principal para quitar el diseño viejo
+        this.getContentPane().removeAll();
+        this.setLayout(new java.awt.BorderLayout());
+
+        // 2. Creamos el panel izquierdo (El menú lateral oscuro)
+        javax.swing.JPanel panelMenu = new javax.swing.JPanel();
+        panelMenu.setBackground(new java.awt.Color(44, 62, 80)); // Azul oscuro elegante
+        panelMenu.setPreferredSize(new java.awt.Dimension(250, 0)); 
+        panelMenu.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 10));
+
+        // 3. Título del menú (El nombre de tu taller)
+        javax.swing.JLabel lblLogo = new javax.swing.JLabel("SAIRTECH"); // Le quitamos la palabra "Admin"
+        lblLogo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        lblLogo.setForeground(java.awt.Color.WHITE);
+        lblLogo.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 0, 5, 0)); 
+        panelMenu.add(lblLogo);
+
+        // NUEVO: Etiqueta dinámica para ver quién entró
+        lblPerfil = new javax.swing.JLabel("Iniciando...");
+        lblPerfil.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
+        lblPerfil.setForeground(new java.awt.Color(189, 195, 199)); // Color gris clarito elegante
+        lblPerfil.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 30, 0)); 
+        panelMenu.add(lblPerfil);
+
+        // 4. Transformamos tus botones actuales al nuevo estilo
+        estilizarBotonMenu(btnEstadisticas, "Dashboard");
+        estilizarBotonMenu(btnClientes, "Clientes");
+        estilizarBotonMenu(btnEquipos, "Equipos");
+        estilizarBotonMenu(btnOrden, "Órdenes");
+        estilizarBotonMenu(btnListado, "Listado");
+        estilizarBotonMenu(btnUsuarios, "Usuarios");
+
+        // 5. Los metemos al panel lateral en el orden que queremos que aparezcan
+        panelMenu.add(btnEstadisticas);
+        panelMenu.add(btnClientes);
+        panelMenu.add(btnEquipos);
+        panelMenu.add(btnOrden);
+        panelMenu.add(btnListado);
+        panelMenu.add(btnUsuarios);
+
+        // 6. Preparamos TU panelContenedor central (el que ya usas para mostrar pantallas)
+        panelContenedor.setLayout(new java.awt.BorderLayout());
+        panelContenedor.setBackground(new java.awt.Color(240, 244, 248)); // Gris claro web
+
+        // 7. Ensamblamos todo en la ventana
+        this.add(panelMenu, java.awt.BorderLayout.WEST);       // Menú a la izquierda
+        this.add(panelContenedor, java.awt.BorderLayout.CENTER); // Contenido al centro
+
+        this.revalidate();
+        this.repaint();
+    }
+
+    // HERRAMIENTA: Le da el look moderno a tus botones sin borrar sus eventos
+    private void estilizarBotonMenu(javax.swing.JButton btn, String texto) {
+        btn.setText(texto);
+        btn.setPreferredSize(new java.awt.Dimension(250, 50)); 
+        btn.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        btn.setForeground(java.awt.Color.WHITE);
+        btn.setBackground(new java.awt.Color(44, 62, 80)); // Mismo color del fondo
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        // Efecto visual: iluminar ligeramente al pasar el cursor
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (btn.isEnabled()) { // Solo ilumina si el botón no está bloqueado
+                    btn.setBackground(new java.awt.Color(52, 73, 94)); 
+                }
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(new java.awt.Color(44, 62, 80)); 
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnClientes;
@@ -383,5 +463,5 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel panelContenedor;
     // End of variables declaration//GEN-END:variables
-    
+    private javax.swing.JLabel lblPerfil;
 }
