@@ -29,6 +29,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     }
     
     // Método público para que el PanelLogin pueda encender el sistema
+    // Método público para que el PanelLogin pueda encender el sistema
     public void habilitarSistema(String rol) {
         // 1. Encendemos los botones generales que TODOS pueden usar
         btnClientes.setEnabled(true);
@@ -37,20 +38,24 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnListado.setEnabled(true);
         btnEstadisticas.setEnabled(true);
         
-        // 2. ¡EL CANDADO DE ORO! 
+        // 2. Control de acceso por roles 
         if (rol.equals("Administrador")) {
-            // Si es el Jefe, encendemos y mostramos el botón secreto
             btnUsuarios.setEnabled(true);
             btnUsuarios.setVisible(true);
         } else {
-            // Si es Técnico, nos aseguramos de que no lo vea
             btnUsuarios.setEnabled(false);
             btnUsuarios.setVisible(false);
         }
         
-        // 3. Quitamos el login y ponemos tu pantalla de inicio por defecto
-        gui.PanelClientes panelInicio = new gui.PanelClientes(); 
-        mostrarPanel(panelInicio); 
+        // 3. ¡CAMBIO AQUÍ! Quitamos el panel de clientes y ponemos el de Estadísticas
+        // Creamos la instancia de tu nuevo panel moderno
+        PanelEstadisticas dashboard = new PanelEstadisticas(); 
+        
+        // Lo mandamos al contenedor central
+        mostrarPanel(dashboard); 
+        
+        // Bloqueamos el botón de estadísticas para indicar que estamos ahí
+        seleccionarBotonMenu(btnEstadisticas); 
     }
     
     private void mostrarPanel(javax.swing.JPanel p) {
@@ -350,25 +355,19 @@ public class VentanaPrincipal extends javax.swing.JFrame {
      */
     
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+        // 1. Ponemos el tema moderno
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
+            javax.swing.UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatLightLaf());
+        } catch (Exception ex) {
+            System.err.println("Error al iniciar FlatLaf: " + ex.getMessage());
         }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new VentanaPrincipal().setVisible(true));
+        // 2. ¡LÍNEA MÁGICA PARA MOSTRAR LA VENTANA!
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new VentanaPrincipal().setVisible(true);
+            }
+        });
     }
     
     

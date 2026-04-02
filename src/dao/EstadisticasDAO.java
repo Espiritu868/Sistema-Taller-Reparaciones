@@ -50,4 +50,31 @@ public class EstadisticasDAO {
         
         return est;
     }
+    
+    // Método para alimentar el gráfico de pastel
+    public java.util.Map<String, Integer> obtenerDatosGraficoEquipos() {
+        java.util.Map<String, Integer> mapaDatos = new java.util.HashMap<>();
+        
+        // OJO: Verifica que los nombres de las tablas coincidan con tu base de datos.
+        // Consulta corregida mirando tu base de datos real
+        String sql = "SELECT t.nombre_tipo, COUNT(e.id_equipo) AS total "
+                   + "FROM equipos_registrados e "
+                   + "INNER JOIN tipos_equipo t ON e.id_tipo = t.id_tipo "
+                   + "GROUP BY t.nombre_tipo";
+        
+        try (java.sql.Connection con = new factory.ConexionFactory().getConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql);
+             java.sql.ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                // Guardamos el nombre del tipo y su cantidad en el mapa
+                mapaDatos.put(rs.getString("nombre_tipo"), rs.getInt("total"));
+            }
+            
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al obtener datos para el gráfico: " + e.getMessage());
+        }
+        
+        return mapaDatos;
+    }
 }
