@@ -11,7 +11,10 @@ public class PanelOrdenes extends javax.swing.JPanel {
     
     public PanelOrdenes() {
         initComponents();
-        scrollBusquedaEquipo.setVisible(false); // Ocultar la tabla al empezar
+        // BORRA ESTA: scrollBusquedaEquipo.setVisible(false);
+        
+        aplicarDisenoOrdenes(); // El diseño visual que crearemos en el Paso 4
+        cargarTablaBuscador("");
     }
     
 
@@ -67,7 +70,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         });
         scrollBusquedaEquipo.setViewportView(tablaBusquedaEquipo);
 
-        jPanel1.add(scrollBusquedaEquipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 110, 700, 70));
+        jPanel1.add(scrollBusquedaEquipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 370, 700, 70));
 
         jLabel1.setFont(new java.awt.Font("Arial", 0, 48)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -145,7 +148,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 130, -1, -1));
 
         txtEquipo.setEditable(false);
-        txtEquipo.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtEquipo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         txtEquipo.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtEquipoKeyReleased(evt);
@@ -154,7 +157,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         jPanel1.add(txtEquipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 130, 200, -1));
 
         txtNombre.setEditable(false);
-        txtNombre.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtNombre.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtNombreKeyReleased(evt);
@@ -174,85 +177,95 @@ public class PanelOrdenes extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // 1. Validar que seleccionó un equipo
+        // 1. VALIDACIONES DE SELECCIÓN Y CAMPOS
         if (idEquipoSeleccionado == -1) {
-            JOptionPane.showMessageDialog(this, "Debe seleccionar un equipo de la lista.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Debe seleccionar un equipo de la lista.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2. Capturar los datos de los campos
         String problema = txtProblema.getText().trim();
         String trabajo = txtTrabajo.getText().trim();
         String estado = cmbEstado.getSelectedItem().toString();
+        String cliente = txtNombre.getText(); // Capturado de la selección en tabla
+        String equipo = txtEquipo.getText();   // Capturado de la selección en tabla
         
-        // Validación de problema (no puede estar vacío)
         if (problema.isEmpty() || problema.equals("Escribe aquí el problema de tu equipo.")) {
-            JOptionPane.showMessageDialog(this, "Por favor, describa el problema del equipo.", "Error", JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, describa el problema del equipo.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
         
-        // El costo lo podemos dejar en 0 por ahora o añadir un txtCosto si lo tienes
-        double costo = 0.0; 
+        // Al crear la orden, el costo inicial es 0.0
+        double costoInicial = 0.0; 
 
-        // 3. Crear el objeto modelo (Asegúrate de tener este constructor en tu clase OrdenReparacion)
+        // 2. CREAR EL OBJETO MODELO
         modelo.OrdenReparacion nuevaOrden = new modelo.OrdenReparacion();
         nuevaOrden.setIdEquipo(idEquipoSeleccionado);
         nuevaOrden.setProblemaReportado(problema);
         nuevaOrden.setTrabajoRealizado(trabajo);
         nuevaOrden.setEstado(estado);
-        nuevaOrden.setCosto(costo);
+        nuevaOrden.setCosto(costoInicial);
 
-        // 4. Llamar al DAO para insertar
+        // 3. LLAMADA AL DAO E INSERCIÓN
         dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO();
         
         if (daoOrden.insertar(nuevaOrden)) {
-            JOptionPane.showMessageDialog(this, "¡Orden de reparación creada con éxito!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             
-            // 5. Limpiar el formulario
+            // --- INICIO GENERACIÓN TICKET DE RECEPCIÓN (ENTRADA) ---
+            try {
+                // A. Obtener técnico desde la ventana principal
+                gui.VentanaPrincipal v = (gui.VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
+                String tecnicoActivo = v.getNombreUsuarioActivo();
+                
+                // B. Usar el Generador con el truco del "0" para que salga como RECEPCIÓN
+                utilidades.GeneradorPDF gen = new utilidades.GeneradorPDF();
+                
+                // Generamos el ticket (Usamos "NUEVA" como ID temporal)
+                boolean ok = gen.crearTicket(
+                    "NUEVA",    // ID temporal
+                    cliente, 
+                    equipo, 
+                    problema, 
+                    "0",        // <--- Al ser "0", el PDF cambia a modo RECEPCIÓN
+                    "SAIRTECH", 
+                    "1601-2003-XXXXXX", 
+                    "Santa Bárbara, HN", 
+                    "+504 9999-9999", 
+                    "Garantía de 30 días en mano de obra.", 
+                    tecnicoActivo
+                );
+
+                if (ok) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "¡Orden Guardada!\nGenerando Comprobante de Recepción...", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // C. Intentar abrir el PDF de entrada automáticamente
+                    java.io.File ticketEntrada = new java.io.File("Ticket_Orden_NUEVA.pdf");
+                    if (ticketEntrada.exists()) {
+                        java.awt.Desktop.getDesktop().open(ticketEntrada);
+                    }
+                }
+            } catch (Exception ex) {
+                System.err.println("Error en flujo de ticket: " + ex.getMessage());
+            }
+            // --- FIN LÓGICA TICKET ---
+
+            // 4. LIMPIAR EL FORMULARIO PARA LA SIGUIENTE ORDEN
             txtBuscarEquipo.setText("");
-            txtProblema.setText("");
-            txtTrabajo.setText("");
+            txtNombre.setText("");
+            txtEquipo.setText("");
+            txtProblema.setText("Escribe aquí el problema de tu equipo.");
+            txtTrabajo.setText("Escribe aquí la reparación realizada.");
             cmbEstado.setSelectedIndex(0);
             idEquipoSeleccionado = -1;
+            cargarTablaBuscador(""); // Refrescar tabla de búsqueda
+            
         } else {
-            JOptionPane.showMessageDialog(this, "No se pudo crear la orden. Revise la conexión.", "Error", JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "No se pudo crear la orden en la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void txtBuscarEquipoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarEquipoKeyReleased
-                                            
-        String texto = txtBuscarEquipo.getText().trim();
-        
-        if (texto.isEmpty()) {
-            scrollBusquedaEquipo.setVisible(false);
-            txtNombre.setText(""); // Limpiamos la caja nueva
-            txtEquipo.setText(""); // Limpiamos la caja nueva
-            return;
-        }
-
-        // Llamamos al método que creamos en el DAO
-        dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
-        java.util.List<Object[]> lista = daoEquipo.buscarEquipoCompleto(texto);
-
-        // Modelo de tabla para mostrar: ID, Modelo, Serie, Dueño
-        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel();
-        modeloTabla.addColumn("ID");
-        modeloTabla.addColumn("Modelo");
-        modeloTabla.addColumn("Serie/IMEI");
-        modeloTabla.addColumn("Dueño");
-
-        for (Object[] fila : lista) {
-            modeloTabla.addRow(fila);
-        }
-
-        tablaBusquedaEquipo.setModel(modeloTabla);
-
-        // Mostrar u ocultar según resultados
-        if (lista.size() > 0) {
-            scrollBusquedaEquipo.setVisible(true);
-        } else {
-            scrollBusquedaEquipo.setVisible(false);
-        }
+       String texto = txtBuscarEquipo.getText().trim();
+       cargarTablaBuscador(texto);
     
     }//GEN-LAST:event_txtBuscarEquipoKeyReleased
   
@@ -261,21 +274,18 @@ public class PanelOrdenes extends javax.swing.JPanel {
         
         if (fila >= 0) {
             try {
-                // 1. ¡MANTENEMOS TU LÓGICA VITAL! Guardamos el ID en tu variable global
-                String idStr = tablaBusquedaEquipo.getValueAt(fila, 0).toString();
-                this.idEquipoSeleccionado = Integer.parseInt(idStr);
+                // 1. Guardamos el ID en tu variable global
+                this.idEquipoSeleccionado = Integer.parseInt(tablaBusquedaEquipo.getValueAt(fila, 0).toString());
                 
-                // 2. Capturamos los datos de la tabla flotante
+                // 2. Capturamos los datos
                 String modelo = tablaBusquedaEquipo.getValueAt(fila, 1).toString();
                 String dueno = tablaBusquedaEquipo.getValueAt(fila, 3).toString();
                 
-                // 3. Llenamos tus nuevas cajitas grises para que se vea súper Premium
+                // 3. Llenamos las cajitas del formulario
                 txtEquipo.setText(modelo);
                 txtNombre.setText(dueno);
                 
-                // 5. Ocultamos la tabla flotante
-                scrollBusquedaEquipo.setVisible(false);
-                
+                // ¡YA NO OCULTAMOS LA TABLA!
             } catch (Exception e) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Error al seleccionar equipo: " + e.getMessage());
             }
@@ -341,4 +351,154 @@ public class PanelOrdenes extends javax.swing.JPanel {
     private javax.swing.JTextArea txtProblema;
     private javax.swing.JTextArea txtTrabajo;
     // End of variables declaration//GEN-END:variables
+    // ==============================================================
+    // CARGAR Y FILTRAR EQUIPOS EN LA TABLA
+    // ==============================================================
+    private void cargarTablaBuscador(String texto) {
+        dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
+        
+        // Usamos tu método buscarEquipoCompleto (si le pasas "", suele traer todos)
+        java.util.List<Object[]> lista = daoEquipo.buscarEquipoCompleto(texto);
+
+        // MODELO BLINDADO
+        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
+            new Object[]{"ID", "Modelo", "Serie/IMEI", "Dueño"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+
+        for (Object[] fila : lista) {
+            modeloTabla.addRow(fila);
+        }
+
+        tablaBusquedaEquipo.setModel(modeloTabla);
+
+        // Tamaños perfectos
+        if (tablaBusquedaEquipo.getColumnModel().getColumnCount() > 0) {
+            tablaBusquedaEquipo.getColumnModel().getColumn(0).setPreferredWidth(40);
+            tablaBusquedaEquipo.getColumnModel().getColumn(1).setPreferredWidth(150);
+            tablaBusquedaEquipo.getColumnModel().getColumn(2).setPreferredWidth(150);
+            tablaBusquedaEquipo.getColumnModel().getColumn(3).setPreferredWidth(200);
+        }
+    }
+    
+    // ==============================================================
+    // NUEVO DISEÑO MODERNO: PANEL DE ÓRDENES
+    // ==============================================================
+    private void aplicarDisenoOrdenes() {
+        // 1. Limpieza
+        this.removeAll();
+        this.setLayout(new java.awt.BorderLayout(20, 20));
+        this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        this.setBackground(new java.awt.Color(240, 244, 248));
+
+        // 2. TÍTULO SUPERIOR
+        javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Crear Nueva Orden de Reparación");
+        lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
+        this.add(lblTitulo, java.awt.BorderLayout.NORTH);
+
+        // 3. SECCIÓN IZQUIERDA: BUSCADOR Y TABLA
+        javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout(0, 15));
+        panelCentro.setOpaque(false);
+
+        javax.swing.JPanel panelBusqueda = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
+        panelBusqueda.setOpaque(false);
+        javax.swing.JLabel lblBuscar = new javax.swing.JLabel("1. Buscar y Seleccionar Equipo:");
+        lblBuscar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        lblBuscar.setForeground(new java.awt.Color(44, 62, 80));
+
+        txtBuscarEquipo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 16));
+        txtBuscarEquipo.setPreferredSize(new java.awt.Dimension(0, 40));
+
+        panelBusqueda.add(lblBuscar, java.awt.BorderLayout.NORTH);
+        panelBusqueda.add(txtBuscarEquipo, java.awt.BorderLayout.CENTER);
+
+        // Estilizar tabla
+        tablaBusquedaEquipo.setRowHeight(35);
+        tablaBusquedaEquipo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        tablaBusquedaEquipo.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        scrollBusquedaEquipo.getViewport().setBackground(java.awt.Color.WHITE);
+        scrollBusquedaEquipo.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200)));
+
+        panelCentro.add(panelBusqueda, java.awt.BorderLayout.NORTH);
+        panelCentro.add(scrollBusquedaEquipo, java.awt.BorderLayout.CENTER);
+        this.add(panelCentro, java.awt.BorderLayout.CENTER);
+
+        // 4. SECCIÓN DERECHA: FORMULARIO
+        javax.swing.JPanel panelDerecho = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panelDerecho.setBackground(java.awt.Color.WHITE);
+        panelDerecho.setPreferredSize(new java.awt.Dimension(380, 0)); // Un poco más ancho por los cuadros de texto
+        panelDerecho.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)),
+                javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.fill = java.awt.GridBagConstraints.BOTH; // BOTH permite que los JTextArea se estiren
+        gbc.insets = new java.awt.Insets(8, 0, 2, 0);
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+        javax.swing.JLabel lblSub = new javax.swing.JLabel("2. Detalles de la Orden");
+        lblSub.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        lblSub.setForeground(java.awt.Color.GRAY);
+        gbc.gridy = 0; gbc.insets = new java.awt.Insets(0, 0, 15, 0);
+        panelDerecho.add(lblSub, gbc);
+
+        // Cajas de texto (Cliente y Equipo)
+        gbc.insets = new java.awt.Insets(5, 0, 2, 0);
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Cliente:"), gbc);
+        txtNombre.setPreferredSize(new java.awt.Dimension(0, 30));
+        gbc.gridy++; panelDerecho.add(txtNombre, gbc);
+
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Equipo:"), gbc);
+        txtEquipo.setPreferredSize(new java.awt.Dimension(0, 30));
+        gbc.gridy++; panelDerecho.add(txtEquipo, gbc);
+
+        // Text Areas grandes para Problema y Trabajo
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Problema Reportado:"), gbc);
+        gbc.weighty = 0.3; // Les damos prioridad para que crezcan hacia abajo
+        panelProblema.setPreferredSize(new java.awt.Dimension(0, 80));
+        txtProblema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        txtProblema.setLineWrap(true);
+        txtProblema.setWrapStyleWord(true);
+        gbc.gridy++; panelDerecho.add(panelProblema, gbc);
+
+        gbc.weighty = 0.0; 
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Trabajo a Realizar / Realizado:"), gbc);
+        gbc.weighty = 0.3;
+        panelTrabajo.setPreferredSize(new java.awt.Dimension(0, 80));
+        txtTrabajo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        txtTrabajo.setLineWrap(true);
+        txtTrabajo.setWrapStyleWord(true);
+        gbc.gridy++; panelDerecho.add(panelTrabajo, gbc);
+
+        // Estado inicial
+        gbc.weighty = 0.0; 
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Estado Inicial:"), gbc);
+        cmbEstado.setPreferredSize(new java.awt.Dimension(0, 35));
+        gbc.gridy++; panelDerecho.add(cmbEstado, gbc);
+
+        // Botón Guardar
+        gbc.gridy++; gbc.insets = new java.awt.Insets(25, 0, 0, 0);
+        btnGuardar.setBackground(new java.awt.Color(46, 204, 113));
+        btnGuardar.setForeground(java.awt.Color.WHITE);
+        btnGuardar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        btnGuardar.setPreferredSize(new java.awt.Dimension(0, 45));
+        btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelDerecho.add(btnGuardar, gbc);
+
+        // Empujador
+        gbc.gridy++; gbc.weighty = 1.0;
+        panelDerecho.add(javax.swing.Box.createVerticalGlue(), gbc);
+
+        this.add(panelDerecho, java.awt.BorderLayout.EAST);
+
+        this.revalidate();
+        this.repaint();
+    }
 }

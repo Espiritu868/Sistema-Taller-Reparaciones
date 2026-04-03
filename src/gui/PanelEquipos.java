@@ -10,13 +10,16 @@ public class PanelEquipos extends javax.swing.JPanel {
     private java.util.List<Integer> listaIdMarcas = new java.util.ArrayList<>();
     public PanelEquipos() {
         initComponents();
-        scrollBusqueda.setVisible(false);
-        
         // Inicializamos el DAO
         tipoDAO = new dao.TipoEquipoDAO();
         
         // Cargamos los tipos y sincronizamos los IDs
         cargarTipos();
+        
+        aplicarDisenoEquipos(); 
+        
+        // ¡NUEVO! Cargamos la tabla con todos los clientes al iniciar
+        cargarTablaBuscador("");
     }
 
     /**
@@ -86,7 +89,7 @@ public class PanelEquipos extends javax.swing.JPanel {
         jLabel4.setText("Modelo");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 320, -1, -1));
 
-        txtModelo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtModelo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtModelo, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 360, 248, -1));
 
         lblIdentificador.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
@@ -100,7 +103,7 @@ public class PanelEquipos extends javax.swing.JPanel {
         jLabel3.setText("Marca");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 230, -1, -1));
 
-        txtImei.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtImei.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(txtImei, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 360, 254, -1));
 
         btnGuardar.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
@@ -113,7 +116,7 @@ public class PanelEquipos extends javax.swing.JPanel {
         jLabel7.setText("Buscar Cliente");
         jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 150, -1, -1));
 
-        txtCliente.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        txtCliente.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         txtCliente.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtClienteKeyReleased(evt);
@@ -121,11 +124,11 @@ public class PanelEquipos extends javax.swing.JPanel {
         });
         jPanel1.add(txtCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(249, 150, 460, -1));
 
-        cmbTipo.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        cmbTipo.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         cmbTipo.addActionListener(this::cmbTipoActionPerformed);
-        jPanel1.add(cmbTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 270, 255, 37));
+        jPanel1.add(cmbTipo, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 260, 255, 30));
 
-        cmbMarca.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        cmbMarca.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jPanel1.add(cmbMarca, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 270, 254, -1));
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
@@ -206,39 +209,7 @@ public class PanelEquipos extends javax.swing.JPanel {
     
     private void txtClienteKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtClienteKeyReleased
         String texto = txtCliente.getText().trim();
-        
-        // Si el técnico borra todo, ocultamos la tabla
-        if (texto.isEmpty()) {
-            scrollBusqueda.setVisible(false);
-            return;
-        }
-        
-        // Buscamos en la BD
-        dao.ClienteDAO daoCliente = new dao.ClienteDAO();
-        java.util.List<modelo.Cliente> lista = daoCliente.buscar(texto);
-        
-        // Configuramos la tabla para mostrar los resultados
-        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel();
-        modeloTabla.addColumn("ID");
-        modeloTabla.addColumn("Identidad");
-        modeloTabla.addColumn("Cliente");
-        
-        for (modelo.Cliente c : lista) {
-            Object[] fila = new Object[3];
-            fila[0] = c.getIdCliente();
-            fila[1] = c.getNumeroIdentidad();
-            fila[2] = c.getNombre() + " " + c.getApellido();
-            modeloTabla.addRow(fila);
-        }
-        
-        tablaBusqueda.setModel(modeloTabla);
-        
-        // Si encontró algo, mostramos la tabla mágica
-        if (lista.size() > 0) {
-            scrollBusqueda.setVisible(true);
-        } else {
-            scrollBusqueda.setVisible(false);
-        }
+        cargarTablaBuscador(texto);
     }//GEN-LAST:event_txtClienteKeyReleased
     
     
@@ -246,15 +217,14 @@ public class PanelEquipos extends javax.swing.JPanel {
         int fila = tablaBusqueda.getSelectedRow();
         
         if (fila >= 0) {
-            // Capturamos el ID oculto de la columna 0 y el nombre de la columna 2
-            idClienteSeleccionado = (int) tablaBusqueda.getValueAt(fila, 0);
+            // Capturamos el ID oculto y el nombre
+            idClienteSeleccionado = Integer.parseInt(tablaBusqueda.getValueAt(fila, 0).toString());
             String nombreCompleto = tablaBusqueda.getValueAt(fila, 2).toString();
             
             // Ponemos el nombre en la caja de texto
             txtCliente.setText(nombreCompleto);
             
-            // Desaparecemos la tabla
-            scrollBusqueda.setVisible(false);
+            // ¡Y YA NO OCULTAMOS LA TABLA! La dejamos ahí para que se vea bonito
         }
     }//GEN-LAST:event_tablaBusquedaMouseClicked
 
@@ -266,9 +236,14 @@ public class PanelEquipos extends javax.swing.JPanel {
         }
 
         // 2. Obtener los IDs de los Combobox usando las listas paralelas
-        // SelectedIndex nos dice qué posición tocó el usuario (0, 1, 2...)
         int idTipo = listaIdTipos.get(cmbTipo.getSelectedIndex());
         int idMarca = listaIdMarcas.get(cmbMarca.getSelectedIndex());
+        
+        // ¡MEJORA LOGICA! Validamos aquí arriba que hayan elegido Tipo y Marca válidos
+        if (idTipo == -1 || idMarca == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, seleccione un Tipo y una Marca válidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // 3. Capturar Modelo e IMEI/Serie
         String modeloEquipo = txtModelo.getText().trim();
@@ -276,12 +251,12 @@ public class PanelEquipos extends javax.swing.JPanel {
 
         // Si el IMEI viene vacío, le generamos uno único temporal
         if (imeiSerie.isEmpty() || imeiSerie.equalsIgnoreCase("N/A")) {
-            // Creamos un código único basado en la hora exacta: SN-202603291720
+            // Creamos un código único basado en la hora exacta: SN-202604021556
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
             imeiSerie = "SN-" + sdf.format(new java.util.Date());
         }
 
-        // 4. Validación básica
+        // 4. Validación básica de texto
         if (modeloEquipo.isEmpty() || imeiSerie.isEmpty()) {
             JOptionPane.showMessageDialog(this, "El modelo y la serie/IMEI son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
@@ -302,23 +277,19 @@ public class PanelEquipos extends javax.swing.JPanel {
         if (daoEquipo.insertar(nuevoEquipo)) {
             JOptionPane.showMessageDialog(this, "¡Equipo registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-            // 7. Limpiar el formulario
+            // 7. Limpiar el formulario para el siguiente registro
             txtCliente.setText("");
+            cmbTipo.setSelectedIndex(0); // Esto automáticamente reinicia las marcas
             txtModelo.setText("");
             txtImei.setText("");
             idClienteSeleccionado = -1; // Reset del cliente
-            scrollBusqueda.setVisible(false); // Ocultar tabla de búsqueda si quedó abierta
+
+            // 8. ¡EL TOQUE MAESTRO! Recargamos la tabla para mostrar a todos los clientes de nuevo
+            cargarTablaBuscador("");
 
         } else {
             JOptionPane.showMessageDialog(this, "Error al registrar el equipo en la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        
-        // Validar que se eligió un tipo y marca válidos (que no sean el índice 0)
-        if (idTipo == -1 || idMarca == -1) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione un Tipo y una Marca válidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
@@ -346,4 +317,158 @@ public class PanelEquipos extends javax.swing.JPanel {
     private javax.swing.JTextField txtImei;
     private javax.swing.JTextField txtModelo;
     // End of variables declaration//GEN-END:variables
+    
+    // ==============================================================
+    // NUEVO DISEÑO MODERNO: PANEL DE EQUIPOS
+    // ==============================================================
+    private void aplicarDisenoEquipos() {
+        // 1. Limpieza total
+        this.removeAll();
+        this.setLayout(new java.awt.BorderLayout(20, 20));
+        this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        this.setBackground(new java.awt.Color(240, 244, 248)); // Gris claro web
+
+        // 2. TÍTULO SUPERIOR
+        javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Registro de Equipos");
+        lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
+        this.add(lblTitulo, java.awt.BorderLayout.NORTH);
+
+        // 3. SECCIÓN IZQUIERDA: BUSCADOR DE CLIENTES
+        javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout(0, 15));
+        panelCentro.setOpaque(false);
+        
+        javax.swing.JPanel panelBusqueda = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
+        panelBusqueda.setOpaque(false);
+        
+        javax.swing.JLabel lblBuscar = new javax.swing.JLabel("1. Buscar y Seleccionar Cliente:");
+        lblBuscar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        lblBuscar.setForeground(new java.awt.Color(44, 62, 80));
+        
+        txtCliente.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 16));
+        txtCliente.setPreferredSize(new java.awt.Dimension(0, 40));
+        
+        panelBusqueda.add(lblBuscar, java.awt.BorderLayout.NORTH);
+        panelBusqueda.add(txtCliente, java.awt.BorderLayout.CENTER);
+        
+        // Estética de la tabla mágica
+        tablaBusqueda.setRowHeight(35);
+        tablaBusqueda.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        tablaBusqueda.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        scrollBusqueda.getViewport().setBackground(java.awt.Color.WHITE);
+        scrollBusqueda.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200)));
+
+        panelCentro.add(panelBusqueda, java.awt.BorderLayout.NORTH);
+        panelCentro.add(scrollBusqueda, java.awt.BorderLayout.CENTER);
+        
+        this.add(panelCentro, java.awt.BorderLayout.CENTER); // Toma todo el espacio disponible
+
+        // 4. SECCIÓN DERECHA: FORMULARIO DEL EQUIPO
+        javax.swing.JPanel panelDerecho = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panelDerecho.setBackground(java.awt.Color.WHITE);
+        panelDerecho.setPreferredSize(new java.awt.Dimension(350, 0));
+        panelDerecho.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)),
+                javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.insets = new java.awt.Insets(10, 0, 5, 0);
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+        javax.swing.JLabel lblSub = new javax.swing.JLabel("2. Datos del Equipo");
+        lblSub.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        lblSub.setForeground(java.awt.Color.GRAY);
+        gbc.gridy = 0; gbc.insets = new java.awt.Insets(0, 0, 15, 0);
+        panelDerecho.add(lblSub, gbc);
+
+        // Preparamos tus componentes
+        cmbTipo.setPreferredSize(new java.awt.Dimension(0, 35));
+        cmbMarca.setPreferredSize(new java.awt.Dimension(0, 35));
+        txtModelo.setPreferredSize(new java.awt.Dimension(0, 35));
+        txtImei.setPreferredSize(new java.awt.Dimension(0, 35));
+        
+        // ¡RESCATE DE COLOR! Le quitamos el blanco a tu Label dinámico para que se vea
+        lblIdentificador.setForeground(new java.awt.Color(44, 62, 80)); 
+        lblIdentificador.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        lblIdentificador.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+
+        // Armamos el formulario
+        gbc.insets = new java.awt.Insets(5, 0, 2, 0);
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Tipo de Equipo:"), gbc);
+        gbc.gridy++; panelDerecho.add(cmbTipo, gbc);
+
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Marca:"), gbc);
+        gbc.gridy++; panelDerecho.add(cmbMarca, gbc);
+
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Modelo:"), gbc);
+        gbc.gridy++; panelDerecho.add(txtModelo, gbc);
+
+        // Aquí agregamos tu Label dinámico (El que dice IMEI o Serie)
+        gbc.gridy++; panelDerecho.add(lblIdentificador, gbc);
+        gbc.gridy++; panelDerecho.add(txtImei, gbc);
+
+        // Botón Guardar
+        gbc.gridy++; gbc.insets = new java.awt.Insets(30, 0, 0, 0);
+        btnGuardar.setBackground(new java.awt.Color(46, 204, 113)); 
+        btnGuardar.setForeground(java.awt.Color.WHITE);
+        btnGuardar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        btnGuardar.setPreferredSize(new java.awt.Dimension(0, 45));
+        btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelDerecho.add(btnGuardar, gbc);
+
+        // Empujador invisible
+        gbc.gridy++; gbc.weighty = 1.0;
+        panelDerecho.add(javax.swing.Box.createVerticalGlue(), gbc);
+
+        // Ensamblamos a la derecha
+        this.add(panelDerecho, java.awt.BorderLayout.EAST);
+
+        this.revalidate();
+        this.repaint();
+    }
+    
+    // ==============================================================
+    // CARGAR Y FILTRAR CLIENTES EN LA TABLA
+    // ==============================================================
+    private void cargarTablaBuscador(String filtro) {
+        dao.ClienteDAO daoCliente = new dao.ClienteDAO();
+        java.util.List<modelo.Cliente> lista;
+        
+        // Si no hay texto, traemos a todos. Si hay texto, buscamos.
+        if (filtro.isEmpty()) {
+            lista = daoCliente.listar(); 
+        } else {
+            lista = daoCliente.buscar(filtro);
+        }
+        
+        // MODELO BLINDADO (Solo lectura)
+        javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
+            new Object[]{"ID", "Identidad", "Cliente"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+        
+        for (modelo.Cliente c : lista) {
+            modeloTabla.addRow(new Object[]{
+                c.getIdCliente(), 
+                c.getNumeroIdentidad(), 
+                c.getNombre() + " " + c.getApellido()
+            });
+        }
+        
+        tablaBusqueda.setModel(modeloTabla);
+        
+        // Ajustamos los tamaños para que se vea limpio
+        if (tablaBusqueda.getColumnModel().getColumnCount() > 0) {
+            tablaBusqueda.getColumnModel().getColumn(0).setPreferredWidth(40); // ID pequeño
+            tablaBusqueda.getColumnModel().getColumn(1).setPreferredWidth(120); // Identidad
+            tablaBusqueda.getColumnModel().getColumn(2).setPreferredWidth(250); // Nombre grande
+        }
+    }
 }

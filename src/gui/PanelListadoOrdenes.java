@@ -2,6 +2,10 @@
 package gui;
 
 import javax.swing.JOptionPane;
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
+import utilidades.GeneradorPDF;
 
 /**
  *
@@ -15,6 +19,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     public PanelListadoOrdenes() {
         initComponents();
         cargarTablaGeneral();
+        aplicarDisenoListado();
     }
     
     // EL NUEVO MÉTODO PARA EL FILTRO
@@ -25,19 +30,22 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         dao.OrdenReparacionDAO dao = new dao.OrdenReparacionDAO();
         java.util.List<Object[]> lista = dao.listarReporteCompleto();
         
-        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel();
-        modelo.addColumn("N°");
-        modelo.addColumn("Cliente");
-        modelo.addColumn("Equipo");
-        modelo.addColumn("Problema");
-        modelo.addColumn("Estado");
-        modelo.addColumn("Costo");
+        // --- MODELO BLINDADO ---
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+            new Object[]{"N°", "Cliente", "Equipo", "Problema", "Estado", "Costo"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
         
         for (Object[] fila : lista) {
             modelo.addRow(fila);
         }
         
         tablaGeneral.setModel(modelo);
+        tablaGeneral.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);
         tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150);
         tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120);
@@ -49,36 +57,35 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     // =========================================================================
     // 2. EL MÉTODO NUEVO (El que atiende al ComboBox y SÍ pide un texto de filtro)
     // =========================================================================
-    public void cargarTablaGeneral(String estadoFiltro) {
+        public void cargarTablaGeneral(String estadoFiltro) {
         dao.OrdenReparacionDAO dao = new dao.OrdenReparacionDAO();
-        java.util.List<Object[]> lista;
-        
-        // Evaluamos qué eligió el usuario en el ComboBox
+
+        // 1. DECLARAMOS la variable aquí afuera (vacía por ahora)
+        java.util.List<Object[]> lista; 
+
+        // 2. Le asignamos valor según el filtro
         if (estadoFiltro.equals("Todos")) {
-            lista = dao.listarReporteCompleto(); // Trae todo
+            lista = dao.listarReporteCompleto(); 
         } else {
-            lista = dao.filtrarPorEstado(estadoFiltro); // Trae solo el estado seleccionado
+            lista = dao.filtrarPorEstado(estadoFiltro); 
         }
-        
-        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel();
-        modelo.addColumn("N°");
-        modelo.addColumn("Cliente");
-        modelo.addColumn("Equipo");
-        modelo.addColumn("Problema");
-        modelo.addColumn("Estado");
-        modelo.addColumn("Costo");
-        
+
+        // 3. Ahora el MODELO BLINDADO...
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+            new Object[]{"N°", "Cliente", "Equipo", "Problema", "Estado", "Costo"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
+
+        // 4. ¡AQUÍ YA NO TENDRÁS ERROR! Porque "lista" ya existe para todo el método
         for (Object[] fila : lista) {
             modelo.addRow(fila);
         }
-        
-        tablaGeneral.setModel(modelo);
-        tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);
-        tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150);
-        tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120);
-        tablaGeneral.getColumnModel().getColumn(3).setPreferredWidth(250);
-        tablaGeneral.getColumnModel().getColumn(4).setPreferredWidth(100);
-        tablaGeneral.getColumnModel().getColumn(5).setPreferredWidth(80);
+
+        // ... (el resto de tu código de setModel y anchos de columna)
     }
 
     /**
@@ -130,6 +137,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         btnGuardar.addActionListener(this::btnGuardarActionPerformed);
         panelContenedor.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 440, -1, 44));
 
+        tablaGeneral.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         tablaGeneral.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -155,11 +163,11 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         jLabel2.setText("Buscar Orden");
         panelContenedor.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 70, -1, -1));
 
-        txtIdOrden.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtIdOrden.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         txtIdOrden.setEnabled(false);
         panelContenedor.add(txtIdOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 20, 90, 30));
 
-        cmbNuevoEstado.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        cmbNuevoEstado.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         cmbNuevoEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "Recibido", "En Revision", "Reparado", "Entregado", "Sin Reparacion" }));
         panelContenedor.add(cmbNuevoEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 20, 150, 30));
 
@@ -168,7 +176,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         jLabel3.setText("Orden N°");
         panelContenedor.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 20, -1, -1));
 
-        txtCostoFinal.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtCostoFinal.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         panelContenedor.add(txtCostoFinal, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 20, 80, 30));
 
         jLabel4.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
@@ -176,7 +184,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         jLabel4.setText("Costo Final");
         panelContenedor.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 20, -1, -1));
 
-        txtBuscarOrden.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        txtBuscarOrden.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         txtBuscarOrden.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtBuscarOrdenKeyReleased(evt);
@@ -194,7 +202,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         btnEntregar.addActionListener(this::btnEntregarActionPerformed);
         panelContenedor.add(btnEntregar, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 440, -1, 44));
 
-        cmbFiltroEstado.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        cmbFiltroEstado.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         cmbFiltroEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Todos", "Recibido", "En Reparacion", "Listo para Entrega", "Entregado" }));
         cmbFiltroEstado.addItemListener(this::cmbFiltroEstadoItemStateChanged);
         panelContenedor.add(cmbFiltroEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 70, 130, 30));
@@ -227,7 +235,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-       
+        
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void tablaGeneralMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaGeneralMouseClicked
@@ -277,26 +285,26 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         String texto = txtBuscarOrden.getText().trim();
         dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO();
         
-        // Si está vacío, cargamos la tabla normal. Si tiene texto, usamos el buscador.
         java.util.List<Object[]> lista = texto.isEmpty() ? 
                                          daoOrden.listarReporteCompleto() : 
                                          daoOrden.buscarOrden(texto);
         
-        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel();
-        modelo.addColumn("N° Orden");
-        modelo.addColumn("Cliente");
-        modelo.addColumn("Equipo");
-        modelo.addColumn("Problema");
-        modelo.addColumn("Estado");
-        modelo.addColumn("Costo");
+        // --- MODELO BLINDADO ---
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+            new Object[]{"N° Orden", "Cliente", "Equipo", "Problema", "Estado", "Costo"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; 
+            }
+        };
         
         for (Object[] fila : lista) {
             modelo.addRow(fila);
         }
         
         tablaGeneral.setModel(modelo);
-        
-        // Mantenemos los tamaños de las columnas para que no se desarmen
+        tablaGeneral.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         tablaGeneral.getColumnModel().getColumn(0).setPreferredWidth(50);
         tablaGeneral.getColumnModel().getColumn(1).setPreferredWidth(150);
         tablaGeneral.getColumnModel().getColumn(2).setPreferredWidth(120);
@@ -389,14 +397,14 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     }//GEN-LAST:event_btnEditarDetallesActionPerformed
 
     private void btnEntregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntregarActionPerformed
-       int fila = tablaGeneral.getSelectedRow(); 
+int fila = tablaGeneral.getSelectedRow(); 
         
         if (fila == -1) {
             javax.swing.JOptionPane.showMessageDialog(this, "Por favor, seleccione una orden de la lista para entregar.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 1. Extraemos TODOS los datos necesarios de tu tabla
+        // 1. Extraemos los datos con los nombres correctos de tus variables
         String idOrden = tablaGeneral.getValueAt(fila, 0).toString();
         String cliente = tablaGeneral.getValueAt(fila, 1).toString();
         String equipo = tablaGeneral.getValueAt(fila, 2).toString();
@@ -419,23 +427,49 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
                 
             dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO(); 
             
-            // Convertimos el ID a número para que la base de datos lo entienda
             if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden))) {
                 
-                // 2. ¡LA MAGIA DEL PDF! Llamamos a tu nueva clase
+                // --- INICIO DE LA LÓGICA UNIFICADA ---
+                
+                // A. Obtenemos el técnico desde la ventana principal
+                VentanaPrincipal v = (VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
+                String tecnicoActivo = v.getNombreUsuarioActivo();
+
+                // B. Llamamos al generador de PDF (Método nivel comercial de 11 parámetros)
                 utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
-                boolean ticketCreado = generador.crearTicket(idOrden, cliente, equipo, problema, costoTotal);
+                boolean ticketCreado = generador.crearTicket(
+                    idOrden, 
+                    cliente, 
+                    equipo, 
+                    problema, 
+                    costoTotal,
+                    "SAIRTECH", 
+                    "1601-2003-XXXXXX", 
+                    "Santa Bárbara, HN", 
+                    "+504 9999-9999", 
+                    "Garantía de 30 días en mano de obra. No aplica en daños por líquido o software.",
+                    tecnicoActivo // Pasamos el técnico aquí
+                );
                 
                 if (ticketCreado) {
-                    javax.swing.JOptionPane.showMessageDialog(this, "¡Cobro exitoso!\nEl ticket PDF se ha generado correctamente.", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    // Por si la base de datos guarda, pero el PDF falla (ej. si el archivo estaba abierto)
-                    javax.swing.JOptionPane.showMessageDialog(this, "Cobro registrado, pero hubo un error al crear el PDF.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
-                }
+                    javax.swing.JOptionPane.showMessageDialog(this, 
+                        "¡Cobro exitoso!\nAtendido por: " + tecnicoActivo, 
+                        "Sairtech - Éxito", 
+                        javax.swing.JOptionPane.INFORMATION_MESSAGE);
 
-                // 3. Refrescamos la tabla para que el estado cambie visualmente
-                // ¡Asegúrate de poner aquí tu método real para recargar la tabla!
-                // cargarTabla(); 
+                    // C. Abrir el PDF automáticamente
+                    try {
+                        java.io.File archivoPDF = new java.io.File("Ticket_Orden_" + idOrden + ".pdf");
+                        if (archivoPDF.exists()) {
+                            java.awt.Desktop.getDesktop().open(archivoPDF);
+                        }
+                    } catch (java.io.IOException ex) {
+                        System.err.println("Error al abrir PDF: " + ex.getMessage());
+                    }
+
+                    // D. Refrescamos la tabla
+                    cargarTablaGeneral(); 
+                }
                 
             } else {
                 javax.swing.JOptionPane.showMessageDialog(this, "Error al procesar la entrega en la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -472,4 +506,126 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     private javax.swing.JTextField txtCostoFinal;
     private javax.swing.JTextField txtIdOrden;
     // End of variables declaration//GEN-END:variables
+    private void aplicarDisenoListado() {
+        // 1. Limpieza total del panel viejo
+        this.removeAll();
+        this.setLayout(new java.awt.BorderLayout(20, 20));
+        this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
+        this.setBackground(new java.awt.Color(240, 244, 248)); // Gris claro moderno
+
+        // 2. PANEL NORTE: Título y Herramientas de búsqueda
+        javax.swing.JPanel panelNorte = new javax.swing.JPanel(new java.awt.BorderLayout(10, 10));
+        panelNorte.setOpaque(false);
+        
+        // 3. LA TABLA (CENTRO)
+        tablaGeneral.setRowHeight(35);
+        tablaGeneral.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        tablaGeneral.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        scrollTablaGeneral.getViewport().setBackground(java.awt.Color.WHITE);
+        scrollTablaGeneral.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 200, 200)));
+        
+        // Bloqueamos el redimensionamiento automático para usar Scroll horizontal si es necesario
+        tablaGeneral.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF); 
+        
+        this.add(scrollTablaGeneral, java.awt.BorderLayout.CENTER);
+        
+        javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Listado Órdenes");
+        lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
+        
+        // Panel derecho para agrupar Buscador y ComboBox
+        javax.swing.JPanel panelHerramientas = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 15, 0));
+        panelHerramientas.setOpaque(false);
+        
+        // Estilo para tus componentes existentes
+        txtBuscarOrden.setPreferredSize(new java.awt.Dimension(250, 35));
+        cmbFiltroEstado.setPreferredSize(new java.awt.Dimension(180, 35));
+        
+        panelHerramientas.add(new javax.swing.JLabel("🔍 Buscar:"));
+        panelHerramientas.add(txtBuscarOrden);
+        panelHerramientas.add(new javax.swing.JLabel("Filtrar Estado:"));
+        panelHerramientas.add(cmbFiltroEstado);
+
+        panelNorte.add(lblTitulo, java.awt.BorderLayout.WEST);
+        panelNorte.add(panelHerramientas, java.awt.BorderLayout.EAST);
+        this.add(panelNorte, java.awt.BorderLayout.NORTH);
+
+        // 4. PANEL DE GESTIÓN DERECHO (ESTE)
+        javax.swing.JPanel panelDerecho = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panelDerecho.setBackground(java.awt.Color.WHITE);
+        panelDerecho.setPreferredSize(new java.awt.Dimension(320, 0)); // Ancho fijo elegante
+        panelDerecho.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220)),
+                javax.swing.BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.insets = new java.awt.Insets(10, 0, 5, 0);
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
+
+        // Título del formulario
+        javax.swing.JLabel lblSub = new javax.swing.JLabel("Gestión de Orden");
+        lblSub.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        lblSub.setForeground(java.awt.Color.GRAY);
+        gbc.gridy = 0;
+        panelDerecho.add(lblSub, gbc);
+
+        // Campos de edición rápida (Tus variables de NetBeans)
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Orden N°:"), gbc);
+        txtIdOrden.setPreferredSize(new java.awt.Dimension(0, 35));
+        gbc.gridy++; panelDerecho.add(txtIdOrden, gbc);
+        
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Actualizar Estado:"), gbc);
+        cmbNuevoEstado.setPreferredSize(new java.awt.Dimension(0, 35));
+        gbc.gridy++; panelDerecho.add(cmbNuevoEstado, gbc);
+
+        gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Costo Final (L.):"), gbc);
+        txtCostoFinal.setPreferredSize(new java.awt.Dimension(0, 35));
+        gbc.gridy++; panelDerecho.add(txtCostoFinal, gbc);
+
+        // Espacio para los botones de acción
+        gbc.gridy++; gbc.insets = new java.awt.Insets(25, 0, 0, 0);
+
+        // Panel de botones apilados
+        javax.swing.JPanel panelAcciones = new javax.swing.JPanel(new java.awt.GridLayout(3, 1, 0, 10));
+        panelAcciones.setOpaque(false);
+
+        // Estilizamos tus botones con colores y el "Hand Cursor"
+        btnActualizarOrden.setBackground(new java.awt.Color(52, 152, 219)); 
+        btnActualizarOrden.setForeground(java.awt.Color.WHITE);
+        btnActualizarOrden.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        
+        btnEditarDetalles.setBackground(new java.awt.Color(155, 89, 182)); 
+        btnEditarDetalles.setForeground(java.awt.Color.WHITE);
+        btnEditarDetalles.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        
+        btnEntregar.setBackground(new java.awt.Color(46, 204, 113)); 
+        btnEntregar.setForeground(java.awt.Color.WHITE);
+        btnEntregar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        panelAcciones.add(btnActualizarOrden);
+        panelAcciones.add(btnEditarDetalles);
+        panelAcciones.add(btnEntregar);
+        
+        gbc.gridy++; panelDerecho.add(panelAcciones, gbc);
+
+        // Botón Eliminar al fondo (Rojo)
+        gbc.insets = new java.awt.Insets(40, 0, 0, 0);
+        btnEliminar.setBackground(new java.awt.Color(231, 76, 60)); 
+        btnEliminar.setForeground(java.awt.Color.WHITE);
+        btnEliminar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        gbc.gridy++; panelDerecho.add(btnEliminar, gbc);
+
+        // Empujador invisible para que todo se quede arriba
+        gbc.gridy++; gbc.weighty = 1.0;
+        panelDerecho.add(javax.swing.Box.createVerticalGlue(), gbc);
+
+        // 5. ENSAMBLAR AL LADO DERECHO
+        this.add(panelDerecho, java.awt.BorderLayout.EAST);
+        
+        this.revalidate();
+        this.repaint();
+    }
 }

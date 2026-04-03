@@ -77,4 +77,55 @@ public class EstadisticasDAO {
         
         return mapaDatos;
     }
+    
+    // =========================================================================
+    // 1. OBTENER NÚMEROS MÁGICOS POR MES Y AÑO
+    // =========================================================================
+    // 1. Obtener números (Tarjetas) por mes y año
+    public modelo.Estadisticas obtenerNumerosMagicosMes(int mes, int anio) {
+        modelo.Estadisticas est = new modelo.Estadisticas();
+        
+        String sqlEntregados = "SELECT COUNT(*) AS total FROM ordenes_reparacion WHERE estado = 'Entregado' AND MONTH(fecha_ingreso) = ? AND YEAR(fecha_ingreso) = ?";
+        String sqlPendientes = "SELECT COUNT(*) AS total FROM ordenes_reparacion WHERE estado NOT IN ('Entregado', 'Sin Reparacion') AND MONTH(fecha_ingreso) = ? AND YEAR(fecha_ingreso) = ?";
+        String sqlGanancias = "SELECT SUM(costo) AS dinero FROM ordenes_reparacion WHERE estado = 'Entregado' AND MONTH(fecha_ingreso) = ? AND YEAR(fecha_ingreso) = ?";
+
+        try (java.sql.Connection con = factory.getConexion()) {
+            // Consulta Entregados
+            try (java.sql.PreparedStatement ps = con.prepareStatement(sqlEntregados)) {
+                ps.setInt(1, mes); ps.setInt(2, anio);
+                try (java.sql.ResultSet rs = ps.executeQuery()) { if (rs.next()) est.setEquiposEntregados(rs.getInt("total")); }
+            }
+            // Consulta Pendientes
+            try (java.sql.PreparedStatement ps = con.prepareStatement(sqlPendientes)) {
+                ps.setInt(1, mes); ps.setInt(2, anio);
+                try (java.sql.ResultSet rs = ps.executeQuery()) { if (rs.next()) est.setOrdenesPendientes(rs.getInt("total")); }
+            }
+            // Consulta Ganancias
+            try (java.sql.PreparedStatement ps = con.prepareStatement(sqlGanancias)) {
+                ps.setInt(1, mes); ps.setInt(2, anio);
+                try (java.sql.ResultSet rs = ps.executeQuery()) { if (rs.next()) est.setGananciasTotales(rs.getDouble("dinero")); }
+            }
+        } catch (Exception e) { System.err.println("Error mensual: " + e.getMessage()); }
+        return est;
+    }
+
+    // 2. Obtener datos del Gráfico por mes y año
+    public java.util.Map<String, Integer> obtenerDatosGraficoEquiposMes(int mes, int anio) {
+        java.util.Map<String, Integer> mapa = new java.util.HashMap<>();
+        String sql = "SELECT t.nombre_tipo, COUNT(o.id_orden) AS total " +
+                     "FROM ordenes_reparacion o " +
+                     "JOIN equipos_registrados e ON o.id_equipo = e.id_equipo " +
+                     "JOIN tipos_equipo t ON e.id_tipo = t.id_tipo " +
+                     "WHERE MONTH(o.fecha_ingreso) = ? AND YEAR(o.fecha_ingreso) = ? " +
+                     "GROUP BY t.nombre_tipo";
+
+        try (java.sql.Connection con = factory.getConexion();
+             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, mes); ps.setInt(2, anio);
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) { mapa.put(rs.getString("nombre_tipo"), rs.getInt("total")); }
+            }
+        } catch (Exception e) { System.err.println("Error gráfico mensual: " + e.getMessage()); }
+        return mapa;
+    }
 }

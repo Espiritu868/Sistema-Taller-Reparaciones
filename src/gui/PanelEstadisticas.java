@@ -148,22 +148,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Background3.jpg"))); // NOI18N
         add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1030, -1));
     }// </editor-fold>//GEN-END:initComponents
-    private javax.swing.JLabel lblReloj;
-    private javax.swing.JLabel lblFecha;
     
-    private void cargarEstadisticas() {
-        dao.EstadisticasDAO daoEstadisticas = new dao.EstadisticasDAO();
-        modelo.Estadisticas datos = daoEstadisticas.obtenerNumerosMagicos();
-
-        // Asumiendo que le pusiste estos nombres a tus JLabels de números grandes:
-        lblEntregados.setText(String.valueOf(datos.getEquiposEntregados()));
-        lblPendientes.setText(String.valueOf(datos.getOrdenesPendientes()));
-        
-        // Formateamos el dinero con dos decimales y el símbolo de Lempiras
-        String dineroFormateado = String.format("L. %.2f", datos.getGananciasTotales());
-        lblGanancias.setText(dineroFormateado);
-        
-    }
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -179,8 +164,83 @@ public class PanelEstadisticas extends javax.swing.JPanel {
     private javax.swing.JLabel lblGanancias;
     private javax.swing.JLabel lblPendientes;
     // End of variables declaration//GEN-END:variables
+                 
     // ==========================================================
-    // DISEÑO MODERNO CON LIBRERÍAS NATIVAS DE JAVA (Cero descargas)
+    // 1. TUS VARIABLES PERSONALIZADAS (Incluyendo Filtros)
+    // ==========================================================
+    private javax.swing.JLabel lblReloj;
+    private javax.swing.JLabel lblFecha;
+    private javax.swing.JComboBox<String> cmbMes;
+    private javax.swing.JComboBox<String> cmbAnio;
+    
+    // ¡NUEVAS LÍNEAS! Los modelos globales para que se puedan actualizar
+    private org.jfree.data.general.DefaultPieDataset datasetGrafico;
+    private javax.swing.table.DefaultTableModel modeloTablaEstadisticas;
+
+    // ==========================================================
+    // 2. MÉTODOS DE DATOS Y RELOJ
+    // ==========================================================
+    private void cargarEstadisticas() {
+        dao.EstadisticasDAO daoEstadisticas = new dao.EstadisticasDAO();
+        modelo.Estadisticas datos = daoEstadisticas.obtenerNumerosMagicos();
+
+        lblEntregados.setText(String.valueOf(datos.getEquiposEntregados()));
+        lblPendientes.setText(String.valueOf(datos.getOrdenesPendientes()));
+        
+        String dineroFormateado = String.format("L. %.2f", datos.getGananciasTotales());
+        lblGanancias.setText(dineroFormateado);
+    }
+
+    private void cargarEstadisticasFiltradas(int mes, int anio) {
+        System.out.println("Buscando en BD -> Mes: " + mes + " | Año: " + anio);
+        
+        dao.EstadisticasDAO daoEst = new dao.EstadisticasDAO();
+
+        // 1. Refrescar Tarjetas
+        modelo.Estadisticas datos = daoEst.obtenerNumerosMagicosMes(mes, anio);
+        if (datos != null) {
+            lblEntregados.setText(String.valueOf(datos.getEquiposEntregados()));
+            lblPendientes.setText(String.valueOf(datos.getOrdenesPendientes()));
+            lblGanancias.setText(String.format("L. %.2f", datos.getGananciasTotales()));
+        }
+
+        // 2. Refrescar Gráfico y Tabla
+        java.util.Map<String, Integer> datosBD = daoEst.obtenerDatosGraficoEquiposMes(mes, anio);
+
+        if (datasetGrafico != null) datasetGrafico.clear();
+        if (modeloTablaEstadisticas != null) modeloTablaEstadisticas.setRowCount(0);
+
+        if (datosBD != null && !datosBD.isEmpty()) {
+            datosBD.forEach((k, v) -> {
+                datasetGrafico.setValue(k, v);
+                modeloTablaEstadisticas.addRow(new Object[]{k, v});
+            });
+        } else {
+            // Si el mes está vacío, mostramos ceros
+            datasetGrafico.setValue("Sin datos", 1);
+            modeloTablaEstadisticas.addRow(new Object[]{"Sin datos", 0});
+        }
+        
+        // Le avisamos al panel que se vuelva a dibujar por si acaso
+        this.repaint();
+    }
+
+    private void iniciarReloj() {
+        java.text.SimpleDateFormat sdfFecha = new java.text.SimpleDateFormat("EEEE, dd 'de' MMMM 'de' yyyy", new java.util.Locale("es", "ES"));
+        lblFecha.setText(sdfFecha.format(new java.util.Date()));
+
+        javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+            java.text.SimpleDateFormat sdfHora = new java.text.SimpleDateFormat("hh:mm:ss a");
+            lblReloj.setText(sdfHora.format(new java.util.Date()));
+        });
+        timer.start();
+    }
+
+    // ==========================================================
+    // 3. MÉTODOS DE DISEÑO VISUAL
+    // ==========================================================
+    // ==========================================================
+    // 3. MÉTODOS DE DISEÑO VISUAL (COMPLETO Y CORREGIDO)
     // ==========================================================
     private void aplicarNuevoDiseno() {
         this.removeAll();
@@ -188,53 +248,73 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         this.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 30, 30, 30));
         this.setBackground(new java.awt.Color(240, 244, 248));
 
-        // 1. --- PANEL DE CABECERA (SALUDO + TIEMPO) ---
-        javax.swing.JPanel panelCabecera = new javax.swing.JPanel(new java.awt.BorderLayout());
+        // --- PANEL DE CABECERA (SALUDO + FILTROS + TIEMPO) ---
+        javax.swing.JPanel panelCabecera = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
         panelCabecera.setOpaque(false);
 
-        javax.swing.JLabel lblSaludo = new javax.swing.JLabel("Resumen Operativo Sairtech");
+        javax.swing.JLabel lblSaludo = new javax.swing.JLabel("Resumen Operativo");
         lblSaludo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
         lblSaludo.setForeground(new java.awt.Color(44, 62, 80));
 
+        // --- FILTROS CENTRALES (Blindados en 1 sola línea) ---
+        javax.swing.JPanel panelFiltros = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        panelFiltros.setOpaque(false);
+        java.awt.GridBagConstraints gbcFiltros = new java.awt.GridBagConstraints();
+        gbcFiltros.insets = new java.awt.Insets(0, 8, 0, 8); 
+        
+        // Inicializamos los ComboBox
+        cmbMes = new javax.swing.JComboBox<>(new String[]{
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        });
+        cmbAnio = new javax.swing.JComboBox<>(new String[]{"2025", "2026", "2027", "2028"});
+        
+        cmbAnio.setPreferredSize(new java.awt.Dimension(90, 32));
+        cmbMes.setPreferredSize(new java.awt.Dimension(130, 32));
+        cmbMes.setSelectedIndex(3); // Abril por defecto
+        cmbAnio.setSelectedItem("2026");
+        
+        javax.swing.JLabel lblFiltroText = new javax.swing.JLabel("Periodo:");
+        lblFiltroText.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 15));
+        lblFiltroText.setForeground(java.awt.Color.GRAY);
+        
+        panelFiltros.add(lblFiltroText, gbcFiltros);
+        panelFiltros.add(cmbAnio, gbcFiltros);
+        panelFiltros.add(cmbMes, gbcFiltros);
+
+        // --- RELOJ ---
         javax.swing.JPanel panelTiempo = new javax.swing.JPanel(new java.awt.GridLayout(2, 1));
         panelTiempo.setOpaque(false);
-
         lblFecha = new javax.swing.JLabel();
         lblFecha.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblFecha.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
-        lblFecha.setForeground(java.awt.Color.GRAY);
-
         lblReloj = new javax.swing.JLabel();
         lblReloj.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblReloj.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
         lblReloj.setForeground(new java.awt.Color(52, 152, 219));
-
         panelTiempo.add(lblFecha);
         panelTiempo.add(lblReloj);
 
         panelCabecera.add(lblSaludo, java.awt.BorderLayout.WEST);
+        panelCabecera.add(panelFiltros, java.awt.BorderLayout.CENTER);
         panelCabecera.add(panelTiempo, java.awt.BorderLayout.EAST);
 
-        // 2. --- PANEL DE TARJETAS ---
+        // --- PANEL DE TARJETAS ---
         javax.swing.JPanel panelTarjetas = new javax.swing.JPanel(new java.awt.GridLayout(1, 3, 20, 0));
         panelTarjetas.setOpaque(false);
         panelTarjetas.setPreferredSize(new java.awt.Dimension(0, 120));
-
         estilizarTarjeta(jPanel3, jLabel3, lblGanancias, new java.awt.Color(46, 204, 113));
         estilizarTarjeta(jPanel1, jLabel1, lblEntregados, new java.awt.Color(52, 152, 219));
         estilizarTarjeta(jPanel2, jLabel2, lblPendientes, new java.awt.Color(231, 76, 60));
-
         panelTarjetas.add(jPanel3);
         panelTarjetas.add(jPanel1);
         panelTarjetas.add(jPanel2);
 
-        // Contenedor Maestro Norte (Junta Cabecera + Tarjetas)
         javax.swing.JPanel contenedorNorte = new javax.swing.JPanel(new java.awt.BorderLayout(0, 20));
         contenedorNorte.setOpaque(false);
         contenedorNorte.add(panelCabecera, java.awt.BorderLayout.NORTH);
         contenedorNorte.add(panelTarjetas, java.awt.BorderLayout.CENTER);
 
-        // 3. --- PANEL CENTRAL (CARDLAYOUT: GRÁFICO / TABLA) ---
+        // --- PANEL CENTRAL (GRÁFICOS Y TABLA) ---
         javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout());
         panelCentro.setBackground(java.awt.Color.WHITE);
         panelCentro.setBorder(javax.swing.BorderFactory.createTitledBorder(
@@ -245,14 +325,12 @@ public class PanelEstadisticas extends javax.swing.JPanel {
                 new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14),
                 java.awt.Color.GRAY));
 
-        // Radio Buttons (Controles)
         javax.swing.JPanel panelControles = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
         panelControles.setBackground(java.awt.Color.WHITE);
         javax.swing.JRadioButton rbtnGrafico = new javax.swing.JRadioButton("Vista Gráfico", true);
         javax.swing.JRadioButton rbtnTabla = new javax.swing.JRadioButton("Vista Tabla");
         rbtnGrafico.setBackground(java.awt.Color.WHITE);
         rbtnTabla.setBackground(java.awt.Color.WHITE);
-
         javax.swing.ButtonGroup grupoVistas = new javax.swing.ButtonGroup();
         grupoVistas.add(rbtnGrafico);
         grupoVistas.add(rbtnTabla);
@@ -260,39 +338,44 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         panelControles.add(rbtnTabla);
         panelCentro.add(panelControles, java.awt.BorderLayout.NORTH);
 
-        // Layout de Cartas
         java.awt.CardLayout layoutCartas = new java.awt.CardLayout();
         javax.swing.JPanel panelCartas = new javax.swing.JPanel(layoutCartas);
         panelCartas.setOpaque(false);
 
-        // Datos BD
+        // 1. INICIALIZAMOS LOS MODELOS GLOBALES
+        datasetGrafico = new org.jfree.data.general.DefaultPieDataset();
+        String[] cols = {"Tipo de Equipo", "Cantidad"};
+        modeloTablaEstadisticas = new javax.swing.table.DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        // Cargamos datos iniciales de la BD
         dao.EstadisticasDAO daoEst = new dao.EstadisticasDAO();
         java.util.Map<String, Integer> datosBD = daoEst.obtenerDatosGraficoEquipos();
 
-        // --- CARTA 1: GRÁFICO ---
-        org.jfree.data.general.DefaultPieDataset ds = new org.jfree.data.general.DefaultPieDataset();
-        if (!datosBD.isEmpty()) {
-            datosBD.forEach(ds::setValue);
+        if (datosBD != null && !datosBD.isEmpty()) {
+            datosBD.forEach((k, v) -> {
+                datasetGrafico.setValue(k, v);
+                modeloTablaEstadisticas.addRow(new Object[]{k, v});
+            });
         } else {
-            ds.setValue("Sin datos", 1);
+            datasetGrafico.setValue("Sin datos", 1);
+            modeloTablaEstadisticas.addRow(new Object[]{"Sin datos", 0});
         }
 
-        org.jfree.chart.JFreeChart chart = org.jfree.chart.ChartFactory.createPieChart("", ds, true, true, false);
+        // 2. Gráfico
+        org.jfree.chart.JFreeChart chart = org.jfree.chart.ChartFactory.createPieChart("", datasetGrafico, true, true, false);
         chart.setBackgroundPaint(java.awt.Color.WHITE);
         org.jfree.chart.plot.PiePlot plot = (org.jfree.chart.plot.PiePlot) chart.getPlot();
         plot.setBackgroundPaint(java.awt.Color.WHITE);
         plot.setOutlineVisible(false);
-        plot.setToolTipGenerator(new org.jfree.chart.labels.StandardPieToolTipGenerator("{0}: {1} ({2})", new java.text.DecimalFormat("0"), new java.text.DecimalFormat("0.0%")));
-
         org.jfree.chart.ChartPanel cp = new org.jfree.chart.ChartPanel(chart);
         cp.setBackground(java.awt.Color.WHITE);
         panelCartas.add(cp, "CARTA_GRAFICO");
 
-        // --- CARTA 2: TABLA ---
-        String[] cols = {"Tipo de Equipo", "Cantidad"};
-        javax.swing.table.DefaultTableModel mod = new javax.swing.table.DefaultTableModel(cols, 0);
-        datosBD.forEach((k, v) -> mod.addRow(new Object[]{k, v}));
-        javax.swing.JTable t = new javax.swing.JTable(mod);
+        // 3. Tabla
+        javax.swing.JTable t = new javax.swing.JTable(modeloTablaEstadisticas);
         t.setRowHeight(30);
         javax.swing.JScrollPane sp = new javax.swing.JScrollPane(t);
         sp.getViewport().setBackground(java.awt.Color.WHITE);
@@ -300,11 +383,18 @@ public class PanelEstadisticas extends javax.swing.JPanel {
 
         panelCentro.add(panelCartas, java.awt.BorderLayout.CENTER);
 
-        // Listeners
+        // LISTENERS
         rbtnGrafico.addActionListener(e -> layoutCartas.show(panelCartas, "CARTA_GRAFICO"));
         rbtnTabla.addActionListener(e -> layoutCartas.show(panelCartas, "CARTA_TABLA"));
+        
+        java.awt.event.ActionListener filtroListener = e -> {
+            int mesNum = cmbMes.getSelectedIndex() + 1;
+            int anioNum = Integer.parseInt(cmbAnio.getSelectedItem().toString());
+            cargarEstadisticasFiltradas(mesNum, anioNum);
+        };
+        cmbMes.addActionListener(filtroListener);
+        cmbAnio.addActionListener(filtroListener);
 
-        // Ensamblado
         this.add(contenedorNorte, java.awt.BorderLayout.NORTH);
         this.add(panelCentro, java.awt.BorderLayout.CENTER);
 
@@ -312,37 +402,21 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         this.repaint();
     }
 
-    // Método para cambiar el diseño de los paneles generados por NetBeans
     private void estilizarTarjeta(javax.swing.JPanel panel, javax.swing.JLabel titulo, javax.swing.JLabel valor, java.awt.Color colorBorde) {
-        // Quitamos el diseño AbsoluteLayout viejo y usamos GridLayout (2 filas, 1 columna)
         panel.setLayout(new java.awt.GridLayout(2, 1)); 
         panel.setBackground(java.awt.Color.WHITE);
         
         panel.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-            javax.swing.BorderFactory.createMatteBorder(5, 0, 0, 0, colorBorde), // Borde superior de color
-            javax.swing.BorderFactory.createEmptyBorder(10, 15, 10, 15) // Relleno interior
+            javax.swing.BorderFactory.createMatteBorder(5, 0, 0, 0, colorBorde),
+            javax.swing.BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
         
-        // Centramos y estilizamos el título
         titulo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         titulo.setForeground(java.awt.Color.GRAY);
         titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
         
-        // Centramos y estilizamos el número grande
         valor.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         valor.setForeground(new java.awt.Color(44, 62, 80));
         valor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 36));
-    }
-    private void iniciarReloj() {
-        // Formato para la fecha: Lunes, 01 de Abril de 2026
-        java.text.SimpleDateFormat sdfFecha = new java.text.SimpleDateFormat("EEEE, dd 'de' MMMM 'de' yyyy", new java.util.Locale("es", "ES"));
-        lblFecha.setText(sdfFecha.format(new java.util.Date()));
-
-        // Timer que se ejecuta cada 1 segundo (1000 ms)
-        javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
-            java.text.SimpleDateFormat sdfHora = new java.text.SimpleDateFormat("hh:mm:ss a");
-            lblReloj.setText(sdfHora.format(new java.util.Date()));
-        });
-        timer.start();
     }
 }

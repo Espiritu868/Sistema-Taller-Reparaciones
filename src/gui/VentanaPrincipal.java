@@ -22,6 +22,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnUsuarios.setEnabled(false);
         btnUsuarios.setVisible(false);
         btnEstadisticas.setEnabled(false);
+        btnSalir.setVisible(false);
         // (Agrega aquí cualquier otro botón de menú que tengas)
 
         // 2. Cargamos el PanelLogin por defecto en el centro
@@ -35,13 +36,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         
         // Actualizamos el perfil en el menú lateral
         lblPerfil.setText(nombreUsuario + " | " + rol);
-
+        
         // 1. Encendemos los botones generales
         btnClientes.setEnabled(true);
         btnEquipos.setEnabled(true);
         btnOrden.setEnabled(true); 
         btnListado.setEnabled(true);
         btnEstadisticas.setEnabled(true);
+        btnSalir.setVisible(true);
         
         // 2. Control de acceso por roles 
         if (rol.equals("Administrador")) {
@@ -376,53 +378,68 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     // NUEVO DISEÑO: MENÚ LATERAL (SIDEBAR)
     // ==============================================================
     private void aplicarDisenoPrincipal() {
-        // 1. Limpiamos la ventana principal para quitar el diseño viejo
+        // 1. Limpieza total de la ventana
         this.getContentPane().removeAll();
         this.setLayout(new java.awt.BorderLayout());
 
-        // 2. Creamos el panel izquierdo (El menú lateral oscuro)
+        // 2. Panel lateral (Sidebar)
         javax.swing.JPanel panelMenu = new javax.swing.JPanel();
-        panelMenu.setBackground(new java.awt.Color(44, 62, 80)); // Azul oscuro elegante
+        panelMenu.setBackground(new java.awt.Color(44, 62, 80)); 
         panelMenu.setPreferredSize(new java.awt.Dimension(250, 0)); 
         panelMenu.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 10));
 
-        // 3. Título del menú (El nombre de tu taller)
-        javax.swing.JLabel lblLogo = new javax.swing.JLabel("SAIRTECH"); // Le quitamos la palabra "Admin"
+        // 3. Logo y Perfil
+        javax.swing.JLabel lblLogo = new javax.swing.JLabel("SAIRTECH");
         lblLogo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
         lblLogo.setForeground(java.awt.Color.WHITE);
         lblLogo.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 0, 5, 0)); 
         panelMenu.add(lblLogo);
 
-        // NUEVO: Etiqueta dinámica para ver quién entró
         lblPerfil = new javax.swing.JLabel("Iniciando...");
         lblPerfil.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
-        lblPerfil.setForeground(new java.awt.Color(189, 195, 199)); // Color gris clarito elegante
+        lblPerfil.setForeground(new java.awt.Color(189, 195, 199));
         lblPerfil.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 30, 0)); 
         panelMenu.add(lblPerfil);
 
-        // 4. Transformamos tus botones actuales al nuevo estilo
+        // 4. Inicializar y estilizar TODOS los botones
+        btnSalir = new javax.swing.JButton(); 
+        
         estilizarBotonMenu(btnEstadisticas, "Dashboard");
         estilizarBotonMenu(btnClientes, "Clientes");
         estilizarBotonMenu(btnEquipos, "Equipos");
         estilizarBotonMenu(btnOrden, "Órdenes");
         estilizarBotonMenu(btnListado, "Listado");
         estilizarBotonMenu(btnUsuarios, "Usuarios");
+        
+        // Estilo especial para Salir
+        estilizarBotonMenu(btnSalir, "Cerrar Sesión");
+        btnSalir.setForeground(new java.awt.Color(231, 76, 60)); // Rojo
+        btnSalir.addActionListener(this::btnSalirActionPerformed);
 
-        // 5. Los metemos al panel lateral en el orden que queremos que aparezcan
+        // 5. AGREGAR AL PANEL EN EL ORDEN CORRECTO (De arriba a abajo)
         panelMenu.add(btnEstadisticas);
         panelMenu.add(btnClientes);
         panelMenu.add(btnEquipos);
         panelMenu.add(btnOrden);
         panelMenu.add(btnListado);
         panelMenu.add(btnUsuarios);
+        
+        // --- EL EMPUJADOR ---
+        // Esto crea el hueco para mandar el botón de salir al fondo
+        javax.swing.JLabel empujador = new javax.swing.JLabel();
+        empujador.setPreferredSize(new java.awt.Dimension(250, 150)); 
+        panelMenu.add(empujador);
+        
+        // El botón de salir queda de último
+        panelMenu.add(btnSalir);
 
-        // 6. Preparamos TU panelContenedor central (el que ya usas para mostrar pantallas)
+        // 6. Contenedor central
         panelContenedor.setLayout(new java.awt.BorderLayout());
-        panelContenedor.setBackground(new java.awt.Color(240, 244, 248)); // Gris claro web
+        panelContenedor.setBackground(new java.awt.Color(240, 244, 248));
 
-        // 7. Ensamblamos todo en la ventana
-        this.add(panelMenu, java.awt.BorderLayout.WEST);       // Menú a la izquierda
-        this.add(panelContenedor, java.awt.BorderLayout.CENTER); // Contenido al centro
+        // 7. Ensamblado final
+        this.add(panelMenu, java.awt.BorderLayout.WEST);       
+        this.add(panelContenedor, java.awt.BorderLayout.CENTER); 
 
         this.revalidate();
         this.repaint();
@@ -450,6 +467,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 btn.setBackground(new java.awt.Color(44, 62, 80)); 
             }
         });
+        
+        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -464,4 +483,29 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JPanel panelContenedor;
     // End of variables declaration//GEN-END:variables
     private javax.swing.JLabel lblPerfil;
+    private javax.swing.JButton btnSalir;
+    
+    private void btnSalirActionPerformed(java.awt.event.ActionEvent evt) {
+        int respuesta = javax.swing.JOptionPane.showConfirmDialog(this, 
+            "¿Desea cerrar la sesión actual?", "Cerrar Sesión", 
+            javax.swing.JOptionPane.YES_NO_OPTION, 
+            javax.swing.JOptionPane.QUESTION_MESSAGE);
+
+        if (respuesta == javax.swing.JOptionPane.YES_OPTION) {
+            // 1. Ocultamos la ventana principal
+            this.setVisible(false);
+            
+            // 2. Creamos una nueva ventana desde cero (esto reinicia todo el flujo)
+            VentanaPrincipal nuevaVentana = new VentanaPrincipal();
+            nuevaVentana.setVisible(true);
+            
+            // 3. Destruimos la ventana vieja para liberar memoria
+            this.dispose();
+        }
+    }
+    
+    public String getNombreUsuarioActivo() {
+        // lblPerfil tiene "Nombre | Rol", extraemos solo el Nombre
+        return lblPerfil.getText().split(" \\| ")[0];
+    }
 }
