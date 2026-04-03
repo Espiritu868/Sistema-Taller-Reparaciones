@@ -397,82 +397,59 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     }//GEN-LAST:event_btnEditarDetallesActionPerformed
 
     private void btnEntregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntregarActionPerformed
-int fila = tablaGeneral.getSelectedRow(); 
-        
+        int fila = tablaGeneral.getSelectedRow(); 
         if (fila == -1) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, seleccione una orden de la lista para entregar.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, seleccione una orden.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 1. Extraemos los datos con los nombres correctos de tus variables
-        String idOrden = tablaGeneral.getValueAt(fila, 0).toString();
-        String cliente = tablaGeneral.getValueAt(fila, 1).toString();
-        String equipo = tablaGeneral.getValueAt(fila, 2).toString();
-        String problema = tablaGeneral.getValueAt(fila, 3).toString();
-        String estadoActual = tablaGeneral.getValueAt(fila, 4).toString();
-        String costoTotal = tablaGeneral.getValueAt(fila, 5).toString();
+        // 1. Extraemos y LIMPIAMOS los datos (Importante el .trim())
+        String idOrden = tablaGeneral.getValueAt(fila, 0).toString().trim();
+        String cliente = tablaGeneral.getValueAt(fila, 1).toString().trim();
+        String equipo = tablaGeneral.getValueAt(fila, 2).toString().trim();
+        String problema = tablaGeneral.getValueAt(fila, 3).toString().trim();
+        String estadoActual = tablaGeneral.getValueAt(fila, 4).toString().trim();
+        String costoTotal = tablaGeneral.getValueAt(fila, 5).toString().trim();
 
         if (estadoActual.equals("Entregado")) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Este equipo ya fue entregado y cobrado anteriormente.", "Aviso", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Esta orden ya fue entregada anteriormente.", "Aviso", javax.swing.JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        int confirmacion = javax.swing.JOptionPane.showConfirmDialog(this,
-                "¿Confirmar la entrega del equipo y el cobro de L. " + costoTotal + "?\nSe generará el ticket de cobro automáticamente.",
-                "Cobro de Reparación",
-                javax.swing.JOptionPane.YES_NO_OPTION,
-                javax.swing.JOptionPane.QUESTION_MESSAGE);
+        int confirmacion = javax.swing.JOptionPane.showConfirmDialog(this, "¿Confirmar entrega y cobro de L. " + costoTotal + "?", "Sairtech", javax.swing.JOptionPane.YES_NO_OPTION);
 
         if (confirmacion == javax.swing.JOptionPane.YES_OPTION) {
-                
             dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO(); 
             
+            // Traemos el trabajo realizado de la BD
+            String[] detalles = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
+            String trabajoRealizado = (detalles[1] != null && !detalles[1].isEmpty()) ? detalles[1] : "Revisión técnica general.";
+
             if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden))) {
-                
-                // --- INICIO DE LA LÓGICA UNIFICADA ---
-                
-                // A. Obtenemos el técnico desde la ventana principal
-                VentanaPrincipal v = (VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
-                String tecnicoActivo = v.getNombreUsuarioActivo();
-
-                // B. Llamamos al generador de PDF (Método nivel comercial de 11 parámetros)
-                utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
-                boolean ticketCreado = generador.crearTicket(
-                    idOrden, 
-                    cliente, 
-                    equipo, 
-                    problema, 
-                    costoTotal,
-                    "SAIRTECH", 
-                    "1601-2003-XXXXXX", 
-                    "Santa Bárbara, HN", 
-                    "+504 9999-9999", 
-                    "Garantía de 30 días en mano de obra. No aplica en daños por líquido o software.",
-                    tecnicoActivo // Pasamos el técnico aquí
-                );
-                
-                if (ticketCreado) {
-                    javax.swing.JOptionPane.showMessageDialog(this, 
-                        "¡Cobro exitoso!\nAtendido por: " + tecnicoActivo, 
-                        "Sairtech - Éxito", 
-                        javax.swing.JOptionPane.INFORMATION_MESSAGE);
-
-                    // C. Abrir el PDF automáticamente
-                    try {
-                        java.io.File archivoPDF = new java.io.File("Ticket_Orden_" + idOrden + ".pdf");
-                        if (archivoPDF.exists()) {
-                            java.awt.Desktop.getDesktop().open(archivoPDF);
-                        }
-                    } catch (java.io.IOException ex) {
-                        System.err.println("Error al abrir PDF: " + ex.getMessage());
+                try {
+                    // A. Datos del técnico
+                    gui.VentanaPrincipal v = (gui.VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
+                    String tecnicoActivo = v.getNombreUsuarioActivo();
+                    
+                    // B. GENERAR EL PDF
+                    utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
+                    boolean ticketCreado = generador.crearTicket(
+                        idOrden, cliente, equipo, problema, costoTotal,
+                        "SAIRTECH", "1601-2003-XXXXXX", "Santa Bárbara, HN", "+504 9999-9999", 
+                        "Garantía de 30 días en mano de obra.", tecnicoActivo, trabajoRealizado,
+                        false // <--- ¡FALSE! Le decimos explícitamente que NO es recepción (Es Factura)
+                    );
+                    
+                   if (ticketCreado) {
+                        javax.swing.JOptionPane.showMessageDialog(this, "¡Entrega exitosa! Factura generada.");
+                        cargarTablaGeneral(); // Solo refrescamos la tabla
+                    } else {
+                        javax.swing.JOptionPane.showMessageDialog(this, "Error: No se pudo crear el ticket.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
                     }
-
-                    // D. Refrescamos la tabla
-                    cargarTablaGeneral(); 
+                } catch (Exception ex) {
+                    System.err.println("Error crítico al entregar: " + ex.getMessage());
+                    ex.printStackTrace(); // Esto nos dirá en consola exactamente qué falló
                 }
-                
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(this, "Error al procesar la entrega en la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_btnEntregarActionPerformed

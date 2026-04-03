@@ -137,7 +137,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         jLabel8.setText("Buscar Equipo");
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 70, -1, -1));
 
-        cmbEstado.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
+        cmbEstado.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         cmbEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "Recibido", "En Revision", "Reparado", "Entregado", "Sin Reparacion" }));
         cmbEstado.addActionListener(this::cmbEstadoActionPerformed);
         jPanel1.add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 340, 120, 30));
@@ -177,7 +177,6 @@ public class PanelOrdenes extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // 1. VALIDACIONES DE SELECCIÓN Y CAMPOS
         if (idEquipoSeleccionado == -1) {
             javax.swing.JOptionPane.showMessageDialog(this, "Debe seleccionar un equipo de la lista.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
@@ -186,69 +185,47 @@ public class PanelOrdenes extends javax.swing.JPanel {
         String problema = txtProblema.getText().trim();
         String trabajo = txtTrabajo.getText().trim();
         String estado = cmbEstado.getSelectedItem().toString();
-        String cliente = txtNombre.getText(); // Capturado de la selección en tabla
-        String equipo = txtEquipo.getText();   // Capturado de la selección en tabla
+        String cliente = txtNombre.getText(); 
+        String equipo = txtEquipo.getText();  
         
         if (problema.isEmpty() || problema.equals("Escribe aquí el problema de tu equipo.")) {
             javax.swing.JOptionPane.showMessageDialog(this, "Por favor, describa el problema del equipo.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // Al crear la orden, el costo inicial es 0.0
-        double costoInicial = 0.0; 
 
-        // 2. CREAR EL OBJETO MODELO
         modelo.OrdenReparacion nuevaOrden = new modelo.OrdenReparacion();
         nuevaOrden.setIdEquipo(idEquipoSeleccionado);
         nuevaOrden.setProblemaReportado(problema);
         nuevaOrden.setTrabajoRealizado(trabajo);
         nuevaOrden.setEstado(estado);
-        nuevaOrden.setCosto(costoInicial);
+        nuevaOrden.setCosto(0.0);
 
-        // 3. LLAMADA AL DAO E INSERCIÓN
         dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO();
+        int idGenerado = daoOrden.insertarConId(nuevaOrden);
         
-        if (daoOrden.insertar(nuevaOrden)) {
-            
-            // --- INICIO GENERACIÓN TICKET DE RECEPCIÓN (ENTRADA) ---
+        if (idGenerado != -1) {
             try {
-                // A. Obtener técnico desde la ventana principal
                 gui.VentanaPrincipal v = (gui.VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
                 String tecnicoActivo = v.getNombreUsuarioActivo();
-                
-                // B. Usar el Generador con el truco del "0" para que salga como RECEPCIÓN
                 utilidades.GeneradorPDF gen = new utilidades.GeneradorPDF();
+                String nroOrdenStr = String.valueOf(idGenerado);
                 
-                // Generamos el ticket (Usamos "NUEVA" como ID temporal)
-                boolean ok = gen.crearTicket(
-                    "NUEVA",    // ID temporal
-                    cliente, 
-                    equipo, 
-                    problema, 
-                    "0",        // <--- Al ser "0", el PDF cambia a modo RECEPCIÓN
-                    "SAIRTECH", 
-                    "1601-2003-XXXXXX", 
-                    "Santa Bárbara, HN", 
-                    "+504 9999-9999", 
-                    "Garantía de 30 días en mano de obra.", 
-                    tecnicoActivo
-                );
+                // Generar el ticket
+                // B. Crear Ticket
+                boolean ok = gen.crearTicket(nroOrdenStr, cliente, equipo, problema, "0.00", 
+                        "SAIRTECH", "1601-2003-XXXXXX", "Santa Bárbara, HN", "+504 9999-9999", 
+                        "Garantía de 30 días en mano de obra.", tecnicoActivo, trabajo, 
+                        true); // <--- ¡TRUE! Le decimos explícitamente que ES una Recepción
 
                 if (ok) {
-                    javax.swing.JOptionPane.showMessageDialog(this, "¡Orden Guardada!\nGenerando Comprobante de Recepción...", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                    
-                    // C. Intentar abrir el PDF de entrada automáticamente
-                    java.io.File ticketEntrada = new java.io.File("Ticket_Orden_NUEVA.pdf");
-                    if (ticketEntrada.exists()) {
-                        java.awt.Desktop.getDesktop().open(ticketEntrada);
-                    }
+                    javax.swing.JOptionPane.showMessageDialog(this, "¡Orden #" + nroOrdenStr + " Guardada exitosamente!", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    // ¡Y listo! Ya no hay try-catch aquí abajo porque el PDF ya se abrió solo.
                 }
             } catch (Exception ex) {
-                System.err.println("Error en flujo de ticket: " + ex.getMessage());
+                System.err.println("Error al procesar ticket: " + ex.getMessage());
             }
-            // --- FIN LÓGICA TICKET ---
 
-            // 4. LIMPIAR EL FORMULARIO PARA LA SIGUIENTE ORDEN
+            // Limpieza manual de campos
             txtBuscarEquipo.setText("");
             txtNombre.setText("");
             txtEquipo.setText("");
@@ -256,10 +233,10 @@ public class PanelOrdenes extends javax.swing.JPanel {
             txtTrabajo.setText("Escribe aquí la reparación realizada.");
             cmbEstado.setSelectedIndex(0);
             idEquipoSeleccionado = -1;
-            cargarTablaBuscador(""); // Refrescar tabla de búsqueda
+            cargarTablaBuscador("");
             
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "No se pudo crear la orden en la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "No se pudo crear la orden.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
