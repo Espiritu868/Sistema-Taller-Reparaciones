@@ -10,15 +10,12 @@ public class PanelEquipos extends javax.swing.JPanel {
     private java.util.List<Integer> listaIdMarcas = new java.util.ArrayList<>();
     public PanelEquipos() {
         initComponents();
-        // Inicializamos el DAO
         tipoDAO = new dao.TipoEquipoDAO();
         
-        // Cargamos los tipos y sincronizamos los IDs
         cargarTipos();
         
         aplicarDisenoEquipos(); 
         
-        // ¡NUEVO! Cargamos la tabla con todos los clientes al iniciar
         cargarTablaBuscador("");
     }
 
@@ -135,17 +132,15 @@ public class PanelEquipos extends javax.swing.JPanel {
     
     private void cargarTipos() {
         cmbTipo.removeAllItems();
-        listaIdTipos.clear(); // Limpiamos la lista de IDs
+        listaIdTipos.clear();
 
-        // Agregamos la opción por defecto y le ponemos un ID falso (-1)
         cmbTipo.addItem("--- Seleccione Tipo ---");
         listaIdTipos.add(-1); 
 
-        // Aprovechamos el método listar() que ya tenías creado en tu DAO
         dao.TipoEquipoDAO daoTipo = new dao.TipoEquipoDAO();
         for (modelo.TipoEquipo t : daoTipo.listar()) {
             cmbTipo.addItem(t.getNombreTipo());
-            listaIdTipos.add(t.getIdTipo()); // Guardamos el ID en la misma posición
+            listaIdTipos.add(t.getIdTipo());
         }
     }
 
@@ -153,22 +148,19 @@ public class PanelEquipos extends javax.swing.JPanel {
         cmbMarca.removeAllItems();
         listaIdMarcas.clear();
 
-        // 1. Si no ha seleccionado nada válido, dejamos todo por defecto
         if (cmbTipo.getSelectedIndex() <= 0) { 
             cmbMarca.addItem("--- Espere ---");
             listaIdMarcas.add(-1);
-            lblIdentificador.setText("IMEI / Serie"); // Texto por defecto
+            lblIdentificador.setText("IMEI / Serie");
             return;
         }
 
         cmbMarca.addItem("--- Seleccione Marca ---");
         listaIdMarcas.add(-1);
 
-        // Obtenemos el texto y el ID real del tipo que el usuario seleccionó
         String tipoSeleccionado = cmbTipo.getSelectedItem().toString();
         int idTipoSeleccionado = listaIdTipos.get(cmbTipo.getSelectedIndex());
 
-        // 2. LA MAGIA DEL LABEL DINÁMICO: Cambiamos el texto de lblIdentificador según el tipo
         switch (tipoSeleccionado) {
             case "Smartphones":
             case "Tablets":
@@ -184,7 +176,6 @@ public class PanelEquipos extends javax.swing.JPanel {
                 break;
         }
 
-        // 3. Buscamos en la BD las marcas que pertenecen SOLO a ese ID de Tipo
         String sql = "SELECT id_marca, nombre_marca FROM marcas WHERE id_tipo = ? ORDER BY nombre_marca ASC";
         
         try (java.sql.Connection con = new factory.ConexionFactory().getConexion();
@@ -213,52 +204,41 @@ public class PanelEquipos extends javax.swing.JPanel {
         int fila = tablaBusqueda.getSelectedRow();
         
         if (fila >= 0) {
-            // Capturamos el ID oculto y el nombre
             idClienteSeleccionado = Integer.parseInt(tablaBusqueda.getValueAt(fila, 0).toString());
             String nombreCompleto = tablaBusqueda.getValueAt(fila, 2).toString();
             
-            // Ponemos el nombre en la caja de texto
             txtCliente.setText(nombreCompleto);
-            
-            // ¡Y YA NO OCULTAMOS LA TABLA! La dejamos ahí para que se vea bonito
         }
     }//GEN-LAST:event_tablaBusquedaMouseClicked
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // 1. Validar que se haya seleccionado un cliente con la búsqueda en vivo
+
         if (idClienteSeleccionado == -1) {
             JOptionPane.showMessageDialog(this, "Por favor, busque y seleccione un cliente primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2. Obtener los IDs de los Combobox usando las listas paralelas
         int idTipo = listaIdTipos.get(cmbTipo.getSelectedIndex());
         int idMarca = listaIdMarcas.get(cmbMarca.getSelectedIndex());
         
-        // ¡MEJORA LOGICA! Validamos aquí arriba que hayan elegido Tipo y Marca válidos
         if (idTipo == -1 || idMarca == -1) {
             JOptionPane.showMessageDialog(this, "Por favor, seleccione un Tipo y una Marca válidos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 3. Capturar Modelo e IMEI/Serie
         String modeloEquipo = txtModelo.getText().trim();
         String imeiSerie = txtImei.getText().trim();
 
-        // Si el IMEI viene vacío, le generamos uno único temporal
         if (imeiSerie.isEmpty() || imeiSerie.equalsIgnoreCase("N/A")) {
-            // Creamos un código único basado en la hora exacta: SN-202604021556
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
             imeiSerie = "SN-" + sdf.format(new java.util.Date());
         }
 
-        // 4. Validación básica de texto
         if (modeloEquipo.isEmpty() || imeiSerie.isEmpty()) {
             JOptionPane.showMessageDialog(this, "El modelo y la serie/IMEI son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 5. Crear el objeto del Modelo
         modelo.EquipoRegistrado nuevoEquipo = new modelo.EquipoRegistrado(
             idClienteSeleccionado,
             idTipo,
@@ -267,20 +247,17 @@ public class PanelEquipos extends javax.swing.JPanel {
             imeiSerie
         );
 
-        // 6. Llamar al DAO para guardar
         dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
 
         if (daoEquipo.insertar(nuevoEquipo)) {
             JOptionPane.showMessageDialog(this, "¡Equipo registrado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-            // 7. Limpiar el formulario para el siguiente registro
             txtCliente.setText("");
-            cmbTipo.setSelectedIndex(0); // Esto automáticamente reinicia las marcas
+            cmbTipo.setSelectedIndex(0); 
             txtModelo.setText("");
             txtImei.setText("");
-            idClienteSeleccionado = -1; // Reset del cliente
+            idClienteSeleccionado = -1; 
 
-            // 8. ¡EL TOQUE MAESTRO! Recargamos la tabla para mostrar a todos los clientes de nuevo
             cargarTablaBuscador("");
 
         } else {
@@ -313,23 +290,20 @@ public class PanelEquipos extends javax.swing.JPanel {
     private javax.swing.JTextField txtModelo;
     // End of variables declaration//GEN-END:variables
     
-    // ==============================================================
-    // NUEVO DISEÑO MODERNO: PANEL DE EQUIPOS
-    // ==============================================================
     private void aplicarDisenoEquipos() {
-        // 1. Limpieza total
+
         this.removeAll();
         this.setLayout(new java.awt.BorderLayout(20, 20));
         this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
         this.setBackground(new java.awt.Color(240, 244, 248)); // Gris claro web
 
-        // 2. TÍTULO SUPERIOR
+        // TÍTULO SUPERIOR
         javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Registro de Equipos");
         lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
         lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
         this.add(lblTitulo, java.awt.BorderLayout.NORTH);
 
-        // 3. SECCIÓN IZQUIERDA: BUSCADOR DE CLIENTES
+        // SECCIÓN IZQUIERDA: BUSCADOR DE CLIENTES
         javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout(0, 15));
         panelCentro.setOpaque(false);
         
@@ -346,7 +320,6 @@ public class PanelEquipos extends javax.swing.JPanel {
         panelBusqueda.add(lblBuscar, java.awt.BorderLayout.NORTH);
         panelBusqueda.add(txtCliente, java.awt.BorderLayout.CENTER);
         
-        // Estética de la tabla mágica
         tablaBusqueda.setRowHeight(35);
         tablaBusqueda.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
         tablaBusqueda.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
@@ -358,7 +331,7 @@ public class PanelEquipos extends javax.swing.JPanel {
         
         this.add(panelCentro, java.awt.BorderLayout.CENTER); // Toma todo el espacio disponible
 
-        // 4. SECCIÓN DERECHA: FORMULARIO DEL EQUIPO
+        // SECCIÓN DERECHA: FORMULARIO DEL EQUIPO
         javax.swing.JPanel panelDerecho = new javax.swing.JPanel(new java.awt.GridBagLayout());
         panelDerecho.setBackground(java.awt.Color.WHITE);
         panelDerecho.setPreferredSize(new java.awt.Dimension(350, 0));
@@ -379,18 +352,15 @@ public class PanelEquipos extends javax.swing.JPanel {
         gbc.gridy = 0; gbc.insets = new java.awt.Insets(0, 0, 15, 0);
         panelDerecho.add(lblSub, gbc);
 
-        // Preparamos tus componentes
         cmbTipo.setPreferredSize(new java.awt.Dimension(0, 35));
         cmbMarca.setPreferredSize(new java.awt.Dimension(0, 35));
         txtModelo.setPreferredSize(new java.awt.Dimension(0, 35));
         txtImei.setPreferredSize(new java.awt.Dimension(0, 35));
         
-        // ¡RESCATE DE COLOR! Le quitamos el blanco a tu Label dinámico para que se vea
         lblIdentificador.setForeground(new java.awt.Color(44, 62, 80)); 
         lblIdentificador.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
         lblIdentificador.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 
-        // Armamos el formulario
         gbc.insets = new java.awt.Insets(5, 0, 2, 0);
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Tipo de Equipo:"), gbc);
         gbc.gridy++; panelDerecho.add(cmbTipo, gbc);
@@ -401,11 +371,9 @@ public class PanelEquipos extends javax.swing.JPanel {
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Modelo:"), gbc);
         gbc.gridy++; panelDerecho.add(txtModelo, gbc);
 
-        // Aquí agregamos tu Label dinámico (El que dice IMEI o Serie)
         gbc.gridy++; panelDerecho.add(lblIdentificador, gbc);
         gbc.gridy++; panelDerecho.add(txtImei, gbc);
 
-        // Botón Guardar
         gbc.gridy++; gbc.insets = new java.awt.Insets(30, 0, 0, 0);
         btnGuardar.setBackground(new java.awt.Color(46, 204, 113)); 
         btnGuardar.setForeground(java.awt.Color.WHITE);
@@ -414,32 +382,25 @@ public class PanelEquipos extends javax.swing.JPanel {
         btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         panelDerecho.add(btnGuardar, gbc);
 
-        // Empujador invisible
         gbc.gridy++; gbc.weighty = 1.0;
         panelDerecho.add(javax.swing.Box.createVerticalGlue(), gbc);
 
-        // Ensamblamos a la derecha
         this.add(panelDerecho, java.awt.BorderLayout.EAST);
 
         this.revalidate();
         this.repaint();
     }
     
-    // ==============================================================
-    // CARGAR Y FILTRAR CLIENTES EN LA TABLA
-    // ==============================================================
     private void cargarTablaBuscador(String filtro) {
         dao.ClienteDAO daoCliente = new dao.ClienteDAO();
         java.util.List<modelo.Cliente> lista;
         
-        // Si no hay texto, traemos a todos. Si hay texto, buscamos.
         if (filtro.isEmpty()) {
             lista = daoCliente.listar(); 
         } else {
             lista = daoCliente.buscar(filtro);
         }
         
-        // MODELO BLINDADO (Solo lectura)
         javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
             new Object[]{"ID", "Identidad", "Cliente"}, 0
         ) {
@@ -459,7 +420,6 @@ public class PanelEquipos extends javax.swing.JPanel {
         
         tablaBusqueda.setModel(modeloTabla);
         
-        // Ajustamos los tamaños para que se vea limpio
         if (tablaBusqueda.getColumnModel().getColumnCount() > 0) {
             tablaBusqueda.getColumnModel().getColumn(0).setPreferredWidth(40); // ID pequeño
             tablaBusqueda.getColumnModel().getColumn(1).setPreferredWidth(120); // Identidad

@@ -15,8 +15,7 @@ public class PanelClientes extends javax.swing.JPanel {
     private void cargarTablaClientes(String textoBusqueda) {
         dao.ClienteDAO dao = new dao.ClienteDAO();
         java.util.List<modelo.Cliente> lista;   
-        
-        // Si no hay texto de búsqueda, mostramos todos. Si hay texto, usamos la búsqueda en vivo.
+       
         if (textoBusqueda.isEmpty()) {
             lista = dao.listar();
         } else {
@@ -29,8 +28,7 @@ public class PanelClientes extends javax.swing.JPanel {
                 return false; 
             }
         };
-
-        // --- 2. AGREGAMOS LAS COLUMNAS ---
+        
         modeloTabla.addColumn("ID");
         modeloTabla.addColumn("Identidad");
         modeloTabla.addColumn("Nombre");
@@ -38,7 +36,6 @@ public class PanelClientes extends javax.swing.JPanel {
         modeloTabla.addColumn("Teléfono");
         modeloTabla.addColumn("Correo");
         
-        // Llenamos las filas separando nombre y apellido
         for (modelo.Cliente c : lista) {
             Object[] fila = new Object[6];
             fila[0] = c.getIdCliente();
@@ -50,20 +47,17 @@ public class PanelClientes extends javax.swing.JPanel {
             modeloTabla.addRow(fila);
         }
         
-        // Se lo aplicamos a tu tabla visual
         tablaClientes.setModel(modeloTabla);
-        // --- NUEVO: Ajuste visual de las columnas ---
-        // Le damos el ancho ideal a cada columna (en píxeles) para que todo se lea perfecto
+
         if (tablaClientes.getColumnModel().getColumnCount() > 0) {
-            tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(40);  // ID (Pequeño)
-            tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(130); // Identidad
-            tablaClientes.getColumnModel().getColumn(2).setPreferredWidth(140); // Nombre
-            tablaClientes.getColumnModel().getColumn(3).setPreferredWidth(140); // Apellido
-            tablaClientes.getColumnModel().getColumn(4).setPreferredWidth(100); // Teléfono
-            tablaClientes.getColumnModel().getColumn(5).setPreferredWidth(200); // Correo (El más grande)
+            tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(40);  
+            tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(130); 
+            tablaClientes.getColumnModel().getColumn(2).setPreferredWidth(140); 
+            tablaClientes.getColumnModel().getColumn(3).setPreferredWidth(140); 
+            tablaClientes.getColumnModel().getColumn(4).setPreferredWidth(100); 
+            tablaClientes.getColumnModel().getColumn(5).setPreferredWidth(200); 
         }
         
-        // --- NUEVO: Ajuste visual de las columnas ---
         if (tablaClientes.getColumnModel().getColumnCount() > 0) {
             tablaClientes.getColumnModel().getColumn(0).setPreferredWidth(50);  
             tablaClientes.getColumnModel().getColumn(1).setPreferredWidth(150); 
@@ -72,7 +66,6 @@ public class PanelClientes extends javax.swing.JPanel {
             tablaClientes.getColumnModel().getColumn(4).setPreferredWidth(120); 
             tablaClientes.getColumnModel().getColumn(5).setPreferredWidth(250); 
             
-            // ¡ESTA ES LA LÍNEA MÁGICA! Le prohíbe a Java aplastar las celdas
             tablaClientes.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF); 
         }
        
@@ -240,15 +233,13 @@ public class PanelClientes extends javax.swing.JPanel {
         if (dao.insertar(nuevoCliente)) {
             JOptionPane.showMessageDialog(this, "¡Cliente guardado exitosamente!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             
-            // Limpiamos las cajas
             txtIdentidad.setText("");
             txtNombre.setText("");
             txtApellido.setText("");
             txtTelefono.setText("");
             txtCorreo.setText("");
-            txtCliente.setText(""); // Limpiamos el buscador
+            txtCliente.setText(""); 
             
-            // Recargamos la tabla para que aparezca el nuevo al instante
             cargarTablaClientes(""); 
         } else {
             JOptionPane.showMessageDialog(this, "Error al guardar. Verifique si la identidad ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -256,23 +247,21 @@ public class PanelClientes extends javax.swing.JPanel {
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void txtClienteKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtClienteKeyReleased
-        // Capturamos lo que el usuario escribe
+
         String texto = txtCliente.getText().trim();
 
-        // Llamamos a tu método que ya hace toda la magia de buscar y armar las 6 columnas
         cargarTablaClientes(texto);
     }//GEN-LAST:event_txtClienteKeyReleased
 
     private void tablaClientesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaClientesMouseClicked
-        // Averiguamos qué fila tocó el usuario
+
         int fila = tablaClientes.getSelectedRow();
         
         if (fila >= 0) {
             try {
-                // Columna 0: Guardamos el ID en secreto
+                
                 idClienteSeleccionado = Integer.parseInt(tablaClientes.getValueAt(fila, 0).toString());
                 
-                // Columna 1 a 5: Extraemos de forma súper segura (evita que el programa explote si hay nulos)
                 Object identidad = tablaClientes.getValueAt(fila, 1);
                 txtIdentidad.setText(identidad != null ? identidad.toString() : "");
                 
@@ -288,16 +277,13 @@ public class PanelClientes extends javax.swing.JPanel {
                 Object correo = tablaClientes.getValueAt(fila, 5);
                 txtCorreo.setText(correo != null ? correo.toString() : "");
                 
-                // TRUCO DE UX: Deshabilitamos Guardar
                 btnGuardar.setEnabled(false);
                 
-                // Si ya tienes tus botones en el diseño, puedes descomentar esto:
                 btnModificar.setEnabled(true);
                 btnEliminar.setEnabled(true);
                 btnLimpiar.setEnabled(true);
                 
             } catch (Exception e) {
-                // Si algo falla, te mostrará una ventanita diciéndote exactamente qué se rompió
                 javax.swing.JOptionPane.showMessageDialog(this, "Error al leer la tabla: " + e.getMessage());
                 System.err.println("Error técnico: " + e);
             }
@@ -310,17 +296,14 @@ public class PanelClientes extends javax.swing.JPanel {
             return;
         }
 
-        // 1. Capturamos los datos actuales de los campos
         String identidadActual = txtIdentidad.getText().trim();
         String nombreActual = txtNombre.getText().trim();
         String apellidoActual = txtApellido.getText().trim();
         String telefonoActual = txtTelefono.getText().trim();
         String correoActual = txtCorreo.getText().trim();
 
-        // 2. Recuperamos los datos de la fila seleccionada en la tabla para comparar
         int fila = tablaClientes.getSelectedRow();
         
-        // Asumiendo que Identidad, Nombre y Apellido son obligatorios en tu BD, pueden quedar con toString()
         String identidadTabla = tablaClientes.getValueAt(fila, 1).toString();
         String nombreTabla = tablaClientes.getValueAt(fila, 2).toString();
         String apellidoTabla = tablaClientes.getValueAt(fila, 3).toString();
@@ -331,7 +314,6 @@ public class PanelClientes extends javax.swing.JPanel {
         Object correoObj = tablaClientes.getValueAt(fila, 5);
         String correoTabla = (correoObj != null) ? correoObj.toString() : "";
 
-        // 3. COMPARACIÓN: Si todo es exactamente igual, le avisamos al usuario
         if (identidadActual.equals(identidadTabla) && 
             nombreActual.equals(nombreTabla) && 
             apellidoActual.equals(apellidoTabla) && 
@@ -339,10 +321,9 @@ public class PanelClientes extends javax.swing.JPanel {
             correoActual.equals(correoTabla)) {
             
             JOptionPane.showMessageDialog(this, "No se han detectado cambios en los datos.", "Información", JOptionPane.INFORMATION_MESSAGE);
-            return; // Salimos sin tocar la base de datos
+            return; 
         }
 
-        // 4. Si pasó la comparación, procedemos con el UPDATE normal
         if (identidadActual.isEmpty() || nombreActual.isEmpty() || apellidoActual.isEmpty() || telefonoActual.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No deje campos obligatorios vacíos.", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
@@ -361,16 +342,14 @@ public class PanelClientes extends javax.swing.JPanel {
     
     
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-            // 1. Validamos que haya alguien seleccionado (por si acaso)
+
         if (idClienteSeleccionado == -1) {
             JOptionPane.showMessageDialog(this, "Por favor, seleccione un cliente de la tabla para eliminarlo.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // 2. Declaramos nuestro conductor UNA sola vez
         dao.ClienteDAO dao = new dao.ClienteDAO();
 
-        // 3. EL CANDADO: Revisamos si tiene historial
         if (dao.tieneHistorial(idClienteSeleccionado)) {
             JOptionPane.showMessageDialog(this, 
                 "No se puede eliminar este cliente porque tiene equipos o reparaciones en el historial.\nPor seguridad contable, sus datos están protegidos.", 
@@ -379,37 +358,30 @@ public class PanelClientes extends javax.swing.JPanel {
             return; // Detenemos la eliminación
         }
 
-        // 4. Pedimos confirmación al usuario (¡Regla de oro de UX!)
         int confirmacion = JOptionPane.showConfirmDialog(this, 
                 "¿Está seguro de que desea eliminar este cliente?\n(Sus datos serán anonimizados por seguridad del sistema)", 
                 "Confirmar Eliminación", 
                 JOptionPane.YES_NO_OPTION, 
                 JOptionPane.WARNING_MESSAGE);
 
-        // 5. Si el usuario elige "Sí"
         if (confirmacion == JOptionPane.YES_OPTION) {
 
-            // Usamos la misma variable "dao" que creamos arriba para eliminar
             if (dao.eliminar(idClienteSeleccionado)) {
                 JOptionPane.showMessageDialog(this, "Cliente eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-                // Restauramos el formulario a su estado original
                 txtIdentidad.setText("");
                 txtNombre.setText("");
                 txtApellido.setText("");
                 txtTelefono.setText("");
                 txtCorreo.setText("");
-                txtCliente.setText(""); // Limpiamos el buscador por si había algo escrito
+                txtCliente.setText("");
 
-                // Reiniciamos la variable secreta
                 idClienteSeleccionado = -1;
 
-                // TRUCO DE UX: Regresamos los botones a la normalidad
                 btnGuardar.setEnabled(true);
-                btnModificar.setEnabled(false); // Apagamos Modificar
-                btnEliminar.setEnabled(false);     // Apagamos Eliminar
+                btnModificar.setEnabled(false); 
+                btnEliminar.setEnabled(false);    
 
-                // Recargamos la tabla para que se vea la fila anonimizada al instante
                 cargarTablaClientes(""); 
             } else {
                 JOptionPane.showMessageDialog(this, "Error al eliminar el cliente.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -418,46 +390,38 @@ public class PanelClientes extends javax.swing.JPanel {
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnLimpiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarActionPerformed
-        // 1. Vaciamos todas las cajas de texto
+
         txtIdentidad.setText("");
         txtNombre.setText("");
         txtApellido.setText("");
         txtTelefono.setText("");
         txtCorreo.setText("");
-        txtCliente.setText(""); // Vaciamos el buscador
+        txtCliente.setText(""); 
         
-        // 2. Olvidamos al cliente que estaba seleccionado
         idClienteSeleccionado = -1;
         
-        // 3. Restauramos los botones a su estado inicial de "Registro Nuevo"
-        btnGuardar.setEnabled(true);     // Encendemos Guardar
-        btnModificar.setEnabled(false);  // Apagamos Modificar
-        btnEliminar.setEnabled(false);      // Apagamos Eliminar
+        btnGuardar.setEnabled(true);     
+        btnModificar.setEnabled(false);  
+        btnEliminar.setEnabled(false);      
         
-        // 4. Deseleccionamos cualquier fila que haya quedado marcada en la tabla visualmente
         tablaClientes.clearSelection();
         
-        // 5. Recargamos la tabla por si acaso
         cargarTablaClientes("");
     }//GEN-LAST:event_btnLimpiarActionPerformed
 
-    // ==============================================================
-    // NUEVO DISEÑO MODERNO: PANEL DE CLIENTES
-    // ==============================================================
     private void aplicarDisenoClientes() {
-        // 1. Borramos el diseño oscuro viejo
         this.removeAll();
         this.setLayout(new java.awt.BorderLayout(20, 20));
         this.setBorder(javax.swing.BorderFactory.createEmptyBorder(25, 25, 25, 25));
-        this.setBackground(new java.awt.Color(240, 244, 248)); // Fondo gris claro
+        this.setBackground(new java.awt.Color(240, 244, 248)); 
 
-        // 2. TÍTULO SUPERIOR
+
         javax.swing.JLabel lblTitulo = new javax.swing.JLabel("Gestión de Clientes");
         lblTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
         lblTitulo.setForeground(new java.awt.Color(44, 62, 80));
         this.add(lblTitulo, java.awt.BorderLayout.NORTH);
 
-        // 3. ZONA IZQUIERDA: BUSCADOR Y TABLA
+        // ZONA IZQUIERDA: BUSCADOR Y TABLA
         javax.swing.JPanel panelIzquierdo = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
         panelIzquierdo.setOpaque(false);
         
@@ -482,7 +446,7 @@ public class PanelClientes extends javax.swing.JPanel {
         panelIzquierdo.add(scrollBusqueda, java.awt.BorderLayout.CENTER);
         this.add(panelIzquierdo, java.awt.BorderLayout.CENTER); // El panel izquierdo toma todo el espacio central
 
-        // 4. ZONA DERECHA: FORMULARIO BLANCO
+        // ZONA DERECHA: FORMULARIO BLANCO
         javax.swing.JPanel panelFormulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
         panelFormulario.setBackground(java.awt.Color.WHITE);
         panelFormulario.setPreferredSize(new java.awt.Dimension(300, 0));
@@ -493,7 +457,7 @@ public class PanelClientes extends javax.swing.JPanel {
 
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gbc.insets = new java.awt.Insets(5, 0, 2, 0); // Márgenes más pequeños porque hay muchos campos
+        gbc.insets = new java.awt.Insets(5, 0, 2, 0);
         gbc.weightx = 1.0;
         gbc.gridx = 0;
 
@@ -503,7 +467,6 @@ public class PanelClientes extends javax.swing.JPanel {
         gbc.gridy = 0; gbc.insets = new java.awt.Insets(0, 0, 15, 0);
         panelFormulario.add(lblSub, gbc);
 
-        // Agregamos tus campos generados por NetBeans al form
         gbc.insets = new java.awt.Insets(5, 0, 2, 0);
         gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Identidad:"), gbc);
         gbc.gridy++; panelFormulario.add(txtIdentidad, gbc);
@@ -520,12 +483,10 @@ public class PanelClientes extends javax.swing.JPanel {
         gbc.gridy++; panelFormulario.add(new javax.swing.JLabel("Correo:"), gbc);
         gbc.gridy++; panelFormulario.add(txtCorreo, gbc);
 
-        // Panel de Botones 2x2
         gbc.gridy++; gbc.insets = new java.awt.Insets(20, 0, 0, 0);
         javax.swing.JPanel panelBotones = new javax.swing.JPanel(new java.awt.GridLayout(2, 2, 10, 10));
         panelBotones.setOpaque(false);
 
-        // Estilos y "Manitas" de los botones
         btnGuardar.setBackground(new java.awt.Color(46, 204, 113)); btnGuardar.setForeground(java.awt.Color.WHITE);
         btnGuardar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
@@ -545,11 +506,9 @@ public class PanelClientes extends javax.swing.JPanel {
 
         gbc.gridy++; panelFormulario.add(panelBotones, gbc);
 
-        // Empujamos todo hacia arriba para que no flote
         gbc.gridy++; gbc.weighty = 1.0;
         panelFormulario.add(javax.swing.Box.createVerticalGlue(), gbc);
 
-        // Agregamos el formulario a la derecha de la pantalla
         this.add(panelFormulario, java.awt.BorderLayout.EAST);
 
         this.revalidate();

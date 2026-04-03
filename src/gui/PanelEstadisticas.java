@@ -1,11 +1,6 @@
 
 package gui;
 
-
-/**
- *
- * @author Ever Chavez
- */
 public class PanelEstadisticas extends javax.swing.JPanel {
 
     
@@ -159,22 +154,15 @@ public class PanelEstadisticas extends javax.swing.JPanel {
     private javax.swing.JLabel lblGanancias;
     private javax.swing.JLabel lblPendientes;
     // End of variables declaration//GEN-END:variables
-                 
-    // ==========================================================
-    // 1. TUS VARIABLES PERSONALIZADAS (Incluyendo Filtros)
-    // ==========================================================
+
     private javax.swing.JLabel lblReloj;
     private javax.swing.JLabel lblFecha;
     private javax.swing.JComboBox<String> cmbMes;
     private javax.swing.JComboBox<String> cmbAnio;
     
-    // ¡NUEVAS LÍNEAS! Los modelos globales para que se puedan actualizar
     private org.jfree.data.general.DefaultPieDataset datasetGrafico;
     private javax.swing.table.DefaultTableModel modeloTablaEstadisticas;
 
-    // ==========================================================
-    // 2. MÉTODOS DE DATOS Y RELOJ
-    // ==========================================================
     private void cargarEstadisticas() {
         dao.EstadisticasDAO daoEstadisticas = new dao.EstadisticasDAO();
         modelo.Estadisticas datos = daoEstadisticas.obtenerNumerosMagicos();
@@ -191,7 +179,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         
         dao.EstadisticasDAO daoEst = new dao.EstadisticasDAO();
 
-        // 1. Refrescar Tarjetas
+        // Refrescar Tarjetas
         modelo.Estadisticas datos = daoEst.obtenerNumerosMagicosMes(mes, anio);
         if (datos != null) {
             lblEntregados.setText(String.valueOf(datos.getEquiposEntregados()));
@@ -199,7 +187,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
             lblGanancias.setText(String.format("L. %.2f", datos.getGananciasTotales()));
         }
 
-        // 2. Refrescar Gráfico y Tabla
+        // Refrescar Gráfico y Tabla
         java.util.Map<String, Integer> datosBD = daoEst.obtenerDatosGraficoEquiposMes(mes, anio);
 
         if (datasetGrafico != null) datasetGrafico.clear();
@@ -211,12 +199,10 @@ public class PanelEstadisticas extends javax.swing.JPanel {
                 modeloTablaEstadisticas.addRow(new Object[]{k, v});
             });
         } else {
-            // Si el mes está vacío, mostramos ceros
             datasetGrafico.setValue("Sin datos", 1);
             modeloTablaEstadisticas.addRow(new Object[]{"Sin datos", 0});
         }
         
-        // Le avisamos al panel que se vuelva a dibujar por si acaso
         this.repaint();
     }
 
@@ -231,19 +217,12 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         timer.start();
     }
 
-    // ==========================================================
-    // 3. MÉTODOS DE DISEÑO VISUAL
-    // ==========================================================
-    // ==========================================================
-    // 3. MÉTODOS DE DISEÑO VISUAL (COMPLETO Y CORREGIDO)
-    // ==========================================================
     private void aplicarNuevoDiseno() {
         this.removeAll();
         this.setLayout(new java.awt.BorderLayout(20, 20));
         this.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 30, 30, 30));
         this.setBackground(new java.awt.Color(240, 244, 248));
 
-        // --- PANEL DE CABECERA (SALUDO + FILTROS + TIEMPO) ---
         javax.swing.JPanel panelCabecera = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
         panelCabecera.setOpaque(false);
 
@@ -251,13 +230,11 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         lblSaludo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
         lblSaludo.setForeground(new java.awt.Color(44, 62, 80));
 
-        // --- FILTROS CENTRALES (Blindados en 1 sola línea) ---
         javax.swing.JPanel panelFiltros = new javax.swing.JPanel(new java.awt.GridBagLayout());
         panelFiltros.setOpaque(false);
         java.awt.GridBagConstraints gbcFiltros = new java.awt.GridBagConstraints();
         gbcFiltros.insets = new java.awt.Insets(0, 8, 0, 8); 
-        
-        // Inicializamos los ComboBox
+
         cmbMes = new javax.swing.JComboBox<>(new String[]{
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
@@ -266,7 +243,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         
         cmbAnio.setPreferredSize(new java.awt.Dimension(90, 32));
         cmbMes.setPreferredSize(new java.awt.Dimension(130, 32));
-        cmbMes.setSelectedIndex(3); // Abril por defecto
+        cmbMes.setSelectedIndex(3); 
         cmbAnio.setSelectedItem("2026");
         
         javax.swing.JLabel lblFiltroText = new javax.swing.JLabel("Periodo:");
@@ -277,7 +254,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         panelFiltros.add(cmbAnio, gbcFiltros);
         panelFiltros.add(cmbMes, gbcFiltros);
 
-        // --- RELOJ ---
+        // RELOJ
         javax.swing.JPanel panelTiempo = new javax.swing.JPanel(new java.awt.GridLayout(2, 1));
         panelTiempo.setOpaque(false);
         lblFecha = new javax.swing.JLabel();
@@ -293,7 +270,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         panelCabecera.add(panelFiltros, java.awt.BorderLayout.CENTER);
         panelCabecera.add(panelTiempo, java.awt.BorderLayout.EAST);
 
-        // --- PANEL DE TARJETAS ---
+        // PANEL DE TARJETAS
         javax.swing.JPanel panelTarjetas = new javax.swing.JPanel(new java.awt.GridLayout(1, 3, 20, 0));
         panelTarjetas.setOpaque(false);
         panelTarjetas.setPreferredSize(new java.awt.Dimension(0, 120));
@@ -309,7 +286,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         contenedorNorte.add(panelCabecera, java.awt.BorderLayout.NORTH);
         contenedorNorte.add(panelTarjetas, java.awt.BorderLayout.CENTER);
 
-        // --- PANEL CENTRAL (GRÁFICOS Y TABLA) ---
+        // PANEL CENTRAL (GRÁFICOS Y TABLA)
         javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout());
         panelCentro.setBackground(java.awt.Color.WHITE);
         panelCentro.setBorder(javax.swing.BorderFactory.createTitledBorder(
@@ -337,7 +314,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         javax.swing.JPanel panelCartas = new javax.swing.JPanel(layoutCartas);
         panelCartas.setOpaque(false);
 
-        // 1. INICIALIZAMOS LOS MODELOS GLOBALES
+        // INICIALIZAMOS LOS MODELOS GLOBALES
         datasetGrafico = new org.jfree.data.general.DefaultPieDataset();
         String[] cols = {"Tipo de Equipo", "Cantidad"};
         modeloTablaEstadisticas = new javax.swing.table.DefaultTableModel(cols, 0) {
@@ -345,7 +322,6 @@ public class PanelEstadisticas extends javax.swing.JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
 
-        // Cargamos datos iniciales de la BD
         dao.EstadisticasDAO daoEst = new dao.EstadisticasDAO();
         java.util.Map<String, Integer> datosBD = daoEst.obtenerDatosGraficoEquipos();
 
@@ -359,7 +335,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
             modeloTablaEstadisticas.addRow(new Object[]{"Sin datos", 0});
         }
 
-        // 2. Gráfico
+        // Gráfico
         org.jfree.chart.JFreeChart chart = org.jfree.chart.ChartFactory.createPieChart("", datasetGrafico, true, true, false);
         chart.setBackgroundPaint(java.awt.Color.WHITE);
         org.jfree.chart.plot.PiePlot plot = (org.jfree.chart.plot.PiePlot) chart.getPlot();
@@ -369,7 +345,7 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         cp.setBackground(java.awt.Color.WHITE);
         panelCartas.add(cp, "CARTA_GRAFICO");
 
-        // 3. Tabla
+        // Tabla
         javax.swing.JTable t = new javax.swing.JTable(modeloTablaEstadisticas);
         t.setRowHeight(30);
         javax.swing.JScrollPane sp = new javax.swing.JScrollPane(t);

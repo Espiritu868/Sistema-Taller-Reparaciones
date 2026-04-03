@@ -19,6 +19,12 @@
             <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/modelo/Estadisticas.java</file>
             <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/dao/EstadisticasDAO.java</file>
             <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/utilidades/GeneradorPDF.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/modelo/OrdenReparacion.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/factory/ConexionFactory.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/dao/EquipoConfigDAO.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/dao/MarcaDAO.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/dao/TipoEquipoDAO.java</file>
+            <file>file:/C:/UTH/PROGRAMACION%20AVANZADA%20I/PARCIAL%20II/ESTUDIANDO_PARA_EXAMEN_LUNES/SistemaTaller/src/modelo/Cliente.java</file>
         </group>
     </open-files>
 </project-private>
