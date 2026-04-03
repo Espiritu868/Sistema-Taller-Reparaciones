@@ -1,5 +1,6 @@
 package gui;
 
+import factory.ConexionFactory;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -202,40 +203,40 @@ public class PanelLogin extends javax.swing.JPanel {
 
     private void btnEntrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntrarActionPerformed
         String usuario = txtUsuario.getText().trim();
-        // Así se extrae el texto de un campo de contraseña de forma segura
         String password = new String(txtPassword.getPassword()); 
 
-        // Validación rápida de campos vacíos
         if (usuario.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Por favor ingrese usuario y contraseña.", "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Llamamos a nuestro conductor de base de datos
         dao.UsuarioDAO daoAcceso = new dao.UsuarioDAO();
         
-        // ¡LA MAGIA NUEVA! Ahora guardamos la palabra (el Rol) que nos devuelve el DAO
+        // 1. Validamos la contraseña y obtenemos el rol
         String rolUsuario = daoAcceso.validarLogin(usuario, password);
         
-        // Si el resultado NO es "ERROR", ¡significa que la contraseña es correcta y pasamos!
         if (!rolUsuario.equals("ERROR")) {
             
-            // Un mensajito elegante para saber quién entró
+            // --- ¡LA MAGIA NUEVA! Vamos a traer el ID ---
+            int idDelTecnico = daoAcceso.obtenerIdPorNombre(usuario);
+            
             JOptionPane.showMessageDialog(this, "¡Bienvenido al sistema, " + rolUsuario + "!", "Acceso Concedido", JOptionPane.INFORMATION_MESSAGE);
 
-            // Buscamos la VentanaPrincipal que contiene este panel
             Window ventana = SwingUtilities.getWindowAncestor(this);
             
-            // Le damos la orden de encender el sistema
             if (ventana instanceof VentanaPrincipal) {
-                ((VentanaPrincipal) ventana).habilitarSistema(rolUsuario, usuario);
+                VentanaPrincipal vp = (VentanaPrincipal) ventana;
+                
+                // --- LE PASAMOS EL ID A LA VENTANA ANTES DE ENCENDER EL SISTEMA ---
+                vp.setIdUsuarioActivo(idDelTecnico); 
+                
+                vp.habilitarSistema(rolUsuario, usuario);
             }
             
         } else {
-            // Si nos devolvió "ERROR", regañamos y limpiamos
             JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos.", "Acceso Denegado", JOptionPane.ERROR_MESSAGE);
-            txtPassword.setText(""); // Limpiamos la contraseña
-            txtUsuario.requestFocus(); // Regresamos el cursor arriba
+            txtPassword.setText(""); 
+            txtUsuario.requestFocus(); 
         }
     }//GEN-LAST:event_btnEntrarActionPerformed
     
@@ -370,6 +371,8 @@ public class PanelLogin extends javax.swing.JPanel {
             g2.fillOval((int) (b.x - b.radio), (int) (b.y - b.radio), (int) (b.radio * 2), (int) (b.radio * 2));
         }
     }
+    
+
     
     private void txtPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtPasswordKeyPressed
         // Si el usuario presiona la tecla ENTER estando en la contraseña...

@@ -158,4 +158,28 @@ public class UsuarioDAO {
             return false;
         }
     }
+    
+        // =========================================================================
+    // NUEVO MÉTODO: OBTIENE EL ID DEL USUARIO A PARTIR DE SU NOMBRE
+    // =========================================================================
+    public int obtenerIdPorNombre(String nombreUsuario) {
+        String sql = "SELECT id_usuario FROM usuarios WHERE usuario = ?";
+        
+        // Instanciamos tu ConexionFactory directamente aquí para evitar errores
+        factory.ConexionFactory miFabrica = new factory.ConexionFactory();
+        
+        try (java.sql.Connection conexion = miFabrica.getConexion(); 
+             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+             
+            comando.setString(1, nombreUsuario);
+            try (java.sql.ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id_usuario");
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Error al obtener ID del usuario: " + e.getMessage());
+        }
+        return 0; 
+    }
 }

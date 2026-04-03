@@ -425,13 +425,18 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
             String[] detalles = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
             String trabajoRealizado = (detalles[1] != null && !detalles[1].isEmpty()) ? detalles[1] : "Revisión técnica general.";
 
-            if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden))) {
-                try {
-                    // A. Datos del técnico
-                    gui.VentanaPrincipal v = (gui.VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
-                    String tecnicoActivo = v.getNombreUsuarioActivo();
+            try {
+                // --- CAMBIO 1: OBTENEMOS EL ID Y EL NOMBRE ANTES DE GUARDAR ---
+                gui.VentanaPrincipal v = (gui.VentanaPrincipal) javax.swing.SwingUtilities.getWindowAncestor(this);
+                String tecnicoActivo = v.getNombreUsuarioActivo();
+                
+                // Asumimos que tienes un método para traer el ID numérico del usuario logueado
+                int idTecnicoActivo = v.getIdUsuarioActivo(); 
+                // --------------------------------------------------------------
+                // --- CAMBIO 2: LE MANDAMOS EL ID DEL TÉCNICO AL DAO ---
+                if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden), idTecnicoActivo)) {
                     
-                    // B. GENERAR EL PDF
+                    // GENERAR EL PDF
                     utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
                     boolean ticketCreado = generador.crearTicket(
                         idOrden, cliente, equipo, problema, costoTotal,
@@ -446,10 +451,12 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
                     } else {
                         javax.swing.JOptionPane.showMessageDialog(this, "Error: No se pudo crear el ticket.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
                     }
-                } catch (Exception ex) {
-                    System.err.println("Error crítico al entregar: " + ex.getMessage());
-                    ex.printStackTrace(); // Esto nos dirá en consola exactamente qué falló
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Error al actualizar la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
                 }
+            } catch (Exception ex) {
+                System.err.println("Error crítico al entregar: " + ex.getMessage());
+                ex.printStackTrace(); // Esto nos dirá en consola exactamente qué falló
             }
         }
     }//GEN-LAST:event_btnEntregarActionPerformed

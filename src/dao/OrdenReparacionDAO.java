@@ -5,7 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement; // Importante para recuperar el ID
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.OrdenReparacion;
@@ -16,14 +16,10 @@ public class OrdenReparacionDAO {
     public OrdenReparacionDAO() {
         this.factory = new ConexionFactory();
     }
-    
-    // =========================================================================
-    // NUEVO MÉTODO: INSERTA Y DEVUELVE EL ID GENERADO (Para el Ticket)
-    // =========================================================================
+
     public int insertarConId(OrdenReparacion orden) {
         String sql = "INSERT INTO Ordenes_Reparacion (id_equipo, problema_reportado, trabajo_realizado, costo, estado) VALUES (?, ?, ?, ?, ?)";
         
-        // El parámetro Statement.RETURN_GENERATED_KEYS es la llave del éxito
         try (Connection conexion = factory.getConexion();
              PreparedStatement comando = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
@@ -36,27 +32,24 @@ public class OrdenReparacionDAO {
             int filasAfectadas = comando.executeUpdate();
             
             if (filasAfectadas > 0) {
-                // Aquí atrapamos el ID que MySQL acaba de inventar
                 try (ResultSet rs = comando.getGeneratedKeys()) {
                     if (rs.next()) {
-                        return rs.getInt(1); // Devolvemos el ID real (ej. 45)
+                        return rs.getInt(1);
                     }
                 }
             }
-            
         } catch (SQLException e) {
-            System.err.println("Error al crear la orden e intentar obtener ID: " + e.getMessage());
+            System.err.println("Error al insertar orden: " + e.getMessage());
         }
-        return -1; // Si algo falla, devolvemos -1
+        return -1;
     }
 
-    // Mantengo tu método insertar original por si lo usas en otros lados y no quieres errores
     public boolean insertar(OrdenReparacion orden) {
         return insertarConId(orden) != -1;
     }
 
     public boolean actualizar(OrdenReparacion orden) {
-        String sql = "UPDATE Ordenes_Reparacion SET problema_reportado = ?, trabajo_realizado = ?, costo = ?, estado = ? WHERE id_orden = ?";
+        String sql = "UPDATE Ordenes_Reparacion SET problema_reportado = ?, trabajo_realizado = ?, costo = ?, estado = ?, id_usuario_entrega = ? WHERE id_orden = ?";
         
         try (Connection conexion = factory.getConexion();
              PreparedStatement comando = conexion.prepareStatement(sql)) {
@@ -65,10 +58,16 @@ public class OrdenReparacionDAO {
             comando.setString(2, orden.getTrabajoRealizado());
             comando.setDouble(3, orden.getCosto());
             comando.setString(4, orden.getEstado());
-            comando.setInt(5, orden.getIdOrden());
+            
+            if (orden.getIdUsuarioEntrega() > 0) {
+                comando.setInt(5, orden.getIdUsuarioEntrega());
+            } else {
+                comando.setNull(5, java.sql.Types.INTEGER);
+            }
+            
+            comando.setInt(6, orden.getIdOrden());
             
             return comando.executeUpdate() > 0;
-            
         } catch (SQLException e) {
             System.err.println("Error al actualizar la orden: " + e.getMessage());
             return false;
@@ -87,14 +86,13 @@ public class OrdenReparacionDAO {
             
             return comando.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Error al actualizar orden: " + e.getMessage());
+            System.err.println("Error al actualizar estado y costo: " + e.getMessage());
             return false;
         }
     }
 
     public List<Object[]> listarReporteCompleto() {
         List<Object[]> listaReporte = new ArrayList<>();
-        
         String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo " +
                      "FROM Ordenes_Reparacion o " +
                      "JOIN Equipos_Registrados e ON o.id_equipo = e.id_equipo " +
@@ -116,7 +114,7 @@ public class OrdenReparacionDAO {
                 listaReporte.add(fila);
             }
         } catch (SQLException e) {
-            System.err.println("Error al generar el reporte completo: " + e.getMessage());
+            System.err.println("Error al listar reporte completo: " + e.getMessage());
         }
         return listaReporte;
     }
@@ -140,16 +138,17 @@ public class OrdenReparacionDAO {
             comando.setString(3, p);
             comando.setString(4, p);
             
-            ResultSet resultado = comando.executeQuery();
-            while (resultado.next()) {
-                Object[] fila = new Object[6];
-                fila[0] = resultado.getInt("id_orden");
-                fila[1] = resultado.getString("nombre_completo");
-                fila[2] = resultado.getString("modelo");
-                fila[3] = resultado.getString("problema_reportado");
-                fila[4] = resultado.getString("estado");
-                fila[5] = resultado.getDouble("costo");
-                lista.add(fila);
+            try (ResultSet resultado = comando.executeQuery()) {
+                while (resultado.next()) {
+                    Object[] fila = new Object[6];
+                    fila[0] = resultado.getInt("id_orden");
+                    fila[1] = resultado.getString("nombre_completo");
+                    fila[2] = resultado.getString("modelo");
+                    fila[3] = resultado.getString("problema_reportado");
+                    fila[4] = resultado.getString("estado");
+                    fila[5] = resultado.getDouble("costo");
+                    lista.add(fila);
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error buscando orden: " + e.getMessage());
@@ -179,14 +178,14 @@ public class OrdenReparacionDAO {
              PreparedStatement comando = conexion.prepareStatement(sql)) {
              
             comando.setInt(1, idOrden);
-            ResultSet rs = comando.executeQuery();
-            
-            if (rs.next()) {
-                textos[0] = rs.getString("problema_reportado");
-                textos[1] = rs.getString("trabajo_realizado");
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    textos[0] = rs.getString("problema_reportado");
+                    textos[1] = rs.getString("trabajo_realizado");
+                }
             }
         } catch (SQLException e) {
-            System.err.println("Error al obtener textos: " + e.getMessage());
+            System.err.println("Error al obtener textos de la orden: " + e.getMessage());
         }
         return textos;
     }
@@ -207,17 +206,18 @@ public class OrdenReparacionDAO {
         }
     }
     
-    public boolean marcarComoEntregado(int idOrden) {
-        String sql = "UPDATE Ordenes_Reparacion SET estado = 'Entregado' WHERE id_orden = ?";
+    public boolean marcarComoEntregado(int idOrden, int idUsuarioEntrega) {
+        String sql = "UPDATE Ordenes_Reparacion SET estado = 'Entregado', id_usuario_entrega = ? WHERE id_orden = ?";
         
-        try (java.sql.Connection conexion = factory.getConexion();
-             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
 
-            comando.setInt(1, idOrden);
+            comando.setInt(1, idUsuarioEntrega);
+            comando.setInt(2, idOrden);
+            
             return comando.executeUpdate() > 0;
-
-        } catch (java.sql.SQLException e) {
-            System.err.println("Error al entregar equipo: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error al marcar equipo como entregado: " + e.getMessage());
             return false;
         }
     }
@@ -249,7 +249,7 @@ public class OrdenReparacionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al filtrar por estado: " + e.getMessage());
+            System.err.println("Error al filtrar órdenes por estado: " + e.getMessage());
         }
         return listaReporte;
     }
@@ -261,20 +261,42 @@ public class OrdenReparacionDAO {
                      "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
                      "WHERE e.id_equipo = ?";
                      
-        try (java.sql.Connection conexion = factory.getConexion();
-             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
              
             comando.setInt(1, idEquipo);
             
-            try (java.sql.ResultSet rs = comando.executeQuery()) {
+            try (ResultSet rs = comando.executeQuery()) {
                 if (rs.next()) {
                     detalles[0] = rs.getString("nombre_completo");
                     detalles[1] = rs.getString("modelo");
                 }
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             System.err.println("Error al buscar detalles del equipo: " + e.getMessage());
         }
         return detalles;
+    }
+    
+    public String obtenerNombreTecnicoEntrega(int idOrden) {
+        String nombreTecnico = "Pendiente de entrega";
+        String sql = "SELECT u.usuario FROM Ordenes_Reparacion o " +
+                     "INNER JOIN usuarios u ON o.id_usuario_entrega = u.id_usuario " +
+                     "WHERE o.id_orden = ?";
+                     
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+             
+            comando.setInt(1, idOrden);
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    nombreTecnico = rs.getString("usuario");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener nombre del técnico: " + e.getMessage());
+        }
+        
+        return nombreTecnico;
     }
 }
