@@ -107,12 +107,11 @@ public class PanelClientes extends javax.swing.JPanel {
         jLabel8 = new javax.swing.JLabel();
         txtCliente = new javax.swing.JTextField();
         btnLimpiar = new javax.swing.JButton();
-        jLabel6 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         tablaClientes.setModel(new javax.swing.table.DefaultTableModel(
@@ -221,9 +220,6 @@ public class PanelClientes extends javax.swing.JPanel {
         jPanel1.add(btnLimpiar, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 420, -1, 44));
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 70, 780, 490));
-
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Background3.jpg"))); // NOI18N
-        add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
@@ -570,7 +566,6 @@ public class PanelClientes extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;

@@ -93,10 +93,12 @@ public class OrdenReparacionDAO {
 
     public List<Object[]> listarReporteCompleto() {
         List<Object[]> listaReporte = new ArrayList<>();
-        String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo " +
+        // Añadimos t.nombre_tipo a la consulta
+        String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo, t.nombre_tipo " +
                      "FROM Ordenes_Reparacion o " +
                      "JOIN Equipos_Registrados e ON o.id_equipo = e.id_equipo " +
                      "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "JOIN Tipos_Equipo t ON e.id_tipo = t.id_tipo " + 
                      "ORDER BY o.fecha_ingreso DESC";
         
         try (Connection conexion = factory.getConexion();
@@ -104,13 +106,14 @@ public class OrdenReparacionDAO {
              ResultSet resultado = comando.executeQuery()) {
             
             while (resultado.next()) {
-                Object[] fila = new Object[6]; 
+                Object[] fila = new Object[7]; // Ampliamos a 7 columnas
                 fila[0] = resultado.getInt("id_orden");
                 fila[1] = resultado.getString("nombre_completo"); 
                 fila[2] = resultado.getString("modelo");
                 fila[3] = resultado.getString("problema_reportado");
                 fila[4] = resultado.getString("estado");
                 fila[5] = resultado.getDouble("costo");
+                fila[6] = resultado.getString("nombre_tipo"); // Nueva columna
                 listaReporte.add(fila);
             }
         } catch (SQLException e) {
@@ -121,11 +124,13 @@ public class OrdenReparacionDAO {
     
     public List<Object[]> buscarOrden(String texto) {
         List<Object[]> lista = new ArrayList<>();
+        // Añadimos t.nombre_tipo a la consulta de búsqueda
         String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, " +
-                     "e.modelo, o.problema_reportado, o.estado, o.costo " +
+                     "e.modelo, o.problema_reportado, o.estado, o.costo, t.nombre_tipo " +
                      "FROM Ordenes_Reparacion o " +
                      "LEFT JOIN Equipos_Registrados e ON o.id_equipo = e.id_equipo " +
                      "LEFT JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "LEFT JOIN Tipos_Equipo t ON e.id_tipo = t.id_tipo " +
                      "WHERE o.id_orden LIKE ? OR c.nombre LIKE ? OR c.apellido LIKE ? OR e.modelo LIKE ? " +
                      "ORDER BY o.id_orden DESC";
         
@@ -140,13 +145,14 @@ public class OrdenReparacionDAO {
             
             try (ResultSet resultado = comando.executeQuery()) {
                 while (resultado.next()) {
-                    Object[] fila = new Object[6];
+                    Object[] fila = new Object[7];
                     fila[0] = resultado.getInt("id_orden");
                     fila[1] = resultado.getString("nombre_completo");
                     fila[2] = resultado.getString("modelo");
                     fila[3] = resultado.getString("problema_reportado");
                     fila[4] = resultado.getString("estado");
                     fila[5] = resultado.getDouble("costo");
+                    fila[6] = resultado.getString("nombre_tipo"); // Nueva columna
                     lista.add(fila);
                 }
             }
@@ -224,10 +230,12 @@ public class OrdenReparacionDAO {
     
     public List<Object[]> filtrarPorEstado(String estadoFiltro) {
         List<Object[]> listaReporte = new ArrayList<>();
-        String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo " +
+        // Añadimos t.nombre_tipo al filtro también
+        String sql = "SELECT o.id_orden, CONCAT(c.nombre, ' ', c.apellido) AS nombre_completo, e.modelo, o.fecha_ingreso, o.problema_reportado, o.estado, o.costo, t.nombre_tipo " +
                      "FROM Ordenes_Reparacion o " +
                      "JOIN Equipos_Registrados e ON o.id_equipo = e.id_equipo " +
                      "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "JOIN Tipos_Equipo t ON e.id_tipo = t.id_tipo " +
                      "WHERE o.estado = ? " + 
                      "ORDER BY o.fecha_ingreso DESC";
         
@@ -238,13 +246,14 @@ public class OrdenReparacionDAO {
             
             try (ResultSet resultado = comando.executeQuery()) {
                 while (resultado.next()) {
-                    Object[] fila = new Object[6]; 
+                    Object[] fila = new Object[7]; 
                     fila[0] = resultado.getInt("id_orden");
                     fila[1] = resultado.getString("nombre_completo"); 
                     fila[2] = resultado.getString("modelo");
                     fila[3] = resultado.getString("problema_reportado");
                     fila[4] = resultado.getString("estado");
                     fila[5] = resultado.getDouble("costo");
+                    fila[6] = resultado.getString("nombre_tipo"); // Nueva columna
                     listaReporte.add(fila);
                 }
             }

@@ -35,12 +35,11 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         jPanel3 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         lblGanancias = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(1027, 627));
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel4.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel4.setBackground(new java.awt.Color(255, 255, 255));
         jPanel4.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jPanel2.setBackground(new java.awt.Color(0, 51, 153));
@@ -144,9 +143,6 @@ public class PanelEstadisticas extends javax.swing.JPanel {
         jPanel4.add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, -1, -1));
 
         add(jPanel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
-
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Background3.jpg"))); // NOI18N
-        add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1030, -1));
     }// </editor-fold>//GEN-END:initComponents
     
     
@@ -155,7 +151,6 @@ public class PanelEstadisticas extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;

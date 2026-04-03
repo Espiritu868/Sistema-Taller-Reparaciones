@@ -18,7 +18,6 @@ public class EquipoRegistradoDAO {
     
     public List<Object[]> buscarEquipoCompleto(String texto) {
         List<Object[]> lista = new ArrayList<>();
-        // Ampliamos el WHERE para incluir los datos del cliente (nombre, apellido, identidad)
         String sql = "SELECT e.id_equipo, e.modelo, e.imei_serie, c.nombre, c.apellido " +
                      "FROM Equipos_Registrados e " +
                      "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
@@ -30,22 +29,21 @@ public class EquipoRegistradoDAO {
             
             String p = "%" + texto + "%";
             
-            // Como pusimos 5 signos de interrogación (?) en el SQL, 
-            // tenemos que pasarle el texto 5 veces al comando.
             comando.setString(1, p);
             comando.setString(2, p);
             comando.setString(3, p);
             comando.setString(4, p);
             comando.setString(5, p);
             
-            ResultSet rs = comando.executeQuery();
-            while (rs.next()) {
-                Object[] fila = new Object[4];
-                fila[0] = rs.getInt("id_equipo");
-                fila[1] = rs.getString("modelo");
-                fila[2] = rs.getString("imei_serie");
-                fila[3] = rs.getString("nombre") + " " + rs.getString("apellido");
-                lista.add(fila);
+            try (ResultSet rs = comando.executeQuery()) {
+                while (rs.next()) {
+                    Object[] fila = new Object[4];
+                    fila[0] = rs.getInt("id_equipo");
+                    fila[1] = rs.getString("modelo");
+                    fila[2] = rs.getString("imei_serie");
+                    fila[3] = rs.getString("nombre") + " " + rs.getString("apellido");
+                    lista.add(fila);
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error buscando equipo: " + e.getMessage());
@@ -54,7 +52,6 @@ public class EquipoRegistradoDAO {
     }
 
     public boolean insertar(EquipoRegistrado equipo) {
-        // Pasamos los IDs del cliente, tipo y marca para crear la relacion
         String sql = "INSERT INTO Equipos_Registrados (id_cliente, id_tipo, id_marca, modelo, imei_serie) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conexion = factory.getConexion();

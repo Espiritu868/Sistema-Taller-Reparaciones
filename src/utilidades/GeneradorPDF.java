@@ -1,42 +1,37 @@
 package utilidades;
 
 import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.awt.Desktop;
 
 public class GeneradorPDF {
 
-    // --- MÉTODO VIEJO (Por si lo usas en otro lado) ---
-    public boolean crearTicket(String idOrden, String cliente, String equipo, String problema, String total, String trabajo) {
-        return crearTicket(idOrden, cliente, equipo, problema, total, 
-                "SAIRTECH", "1601-2003-XXXXXX", "Santa Bárbara, HN", "+504 9999-9999", 
-                "Garantía de 30 días en mano de obra.", "Sistema", trabajo, true); 
-    }
-
-    // --- MÉTODO NUEVO COMERCIAL (Ahora pide confirmación: ¿esRecepcion?) ---
     public boolean crearTicket(String idOrden, String cliente, String equipo, String problema, 
                                String total, String nombreEmpresa, String rtn, String direccion, 
                                String telefono, String politicaGarantia, String nombreTecnico, String trabajo, 
-                               boolean esRecepcion) { // <--- NUEVO PARÁMETRO AQUÍ
+                               boolean esRecepcion) {
 
         Rectangle formatoTicket = new Rectangle(226, 800); 
         Document documento = new Document(formatoTicket, 10, 10, 10, 10);
 
         try {
-            // 1. RUTA DINÁMICA A LA CARPETA DEL PROYECTO
-            String rutaBase = System.getProperty("user.dir") + java.io.File.separator + "Tickets_Sairtech";
-            java.io.File dirBase = new java.io.File(rutaBase);
+            String rutaBase = System.getProperty("user.dir") + File.separator + "Tickets_Sairtech";
+            File dirBase = new File(rutaBase);
             if (!dirBase.exists()) dirBase.mkdir();
 
-            // 2. AHORA LA CARPETA DEPENDE DEL PARÁMETRO, NO DEL COSTO
             String nombreCarpeta = esRecepcion ? "Recepciones" : "Entregas";
-            java.io.File directorioFinal = new java.io.File(rutaBase + java.io.File.separator + nombreCarpeta);
+            File directorioFinal = new File(rutaBase + File.separator + nombreCarpeta);
             if (!directorioFinal.exists()) directorioFinal.mkdir();
 
             String clienteLimpio = cliente.replace(" ", "_");
             String nombreArchivo = idOrden + "_" + clienteLimpio + ".pdf";
-            String ruta = directorioFinal.getAbsolutePath() + java.io.File.separator + nombreArchivo;
+            String ruta = directorioFinal.getAbsolutePath() + File.separator + nombreArchivo;
             
-            PdfWriter.getInstance(documento, new java.io.FileOutputStream(ruta));
+            PdfWriter.getInstance(documento, new FileOutputStream(ruta));
             documento.open();
 
             Font fuenteLogo = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
@@ -51,7 +46,6 @@ public class GeneradorPDF {
             header.add(new Paragraph(direccion + "\nTel: " + telefono + "\n", fuenteNormal));
             documento.add(header);
 
-            // 3. TÍTULO DEPENDIENTE DEL PARÁMETRO
             String tituloPrincipal = esRecepcion ? "COMPROBANTE DE RECEPCIÓN" : "FACTURA DE SERVICIO";
 
             Paragraph infoOrden = new Paragraph();
@@ -59,7 +53,7 @@ public class GeneradorPDF {
             infoOrden.add(new Paragraph("\n" + tituloPrincipal + "\n", fuenteTitulo));
             infoOrden.add(new Paragraph("Orden #: " + idOrden + "\n", fuenteNormal));
             infoOrden.add(new Paragraph("Atendido por: " + nombreTecnico + "\n", fuenteNegrita));
-            infoOrden.add(new Paragraph("Fecha: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date()) + "\n", fuenteNormal));
+            infoOrden.add(new Paragraph("Fecha: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()) + "\n", fuenteNormal));
             infoOrden.add(new Paragraph("----------------------------------------\n", fuenteNormal));
             documento.add(infoOrden);
 
@@ -68,10 +62,10 @@ public class GeneradorPDF {
             documento.add(new Paragraph("EQUIPO: ", fuenteNegrita));
             documento.add(new Paragraph(equipo + "\n\n", fuenteNormal));
 
-            com.itextpdf.text.pdf.PdfPTable tablaDetalle = new com.itextpdf.text.pdf.PdfPTable(1);
+            PdfPTable tablaDetalle = new PdfPTable(1);
             tablaDetalle.setWidthPercentage(100);
 
-            com.itextpdf.text.pdf.PdfPCell celda = new com.itextpdf.text.pdf.PdfPCell();
+            PdfPCell celda = new PdfPCell();
             celda.setBorder(Rectangle.BOX);
             celda.setBorderColor(BaseColor.LIGHT_GRAY);
             celda.setPadding(8);
@@ -90,7 +84,6 @@ public class GeneradorPDF {
             documento.add(tablaDetalle);
             documento.add(new Paragraph("\n----------------------------------------\n", fuenteNormal));
 
-            // 4. COBRO (Ahora muestra el total así sea 0.00 en las Entregas)
             if (!esRecepcion) {
                 Paragraph cobro = new Paragraph("TOTAL A PAGAR: L. " + total + "\n", fuenteTitulo);
                 cobro.setAlignment(Element.ALIGN_RIGHT);
@@ -114,11 +107,10 @@ public class GeneradorPDF {
 
             documento.close();
 
-            // ABRIR EL PDF AUTOMÁTICAMENTE
             try {
-                java.io.File archivoGenerado = new java.io.File(ruta);
+                File archivoGenerado = new File(ruta);
                 if (archivoGenerado.exists()) {
-                    java.awt.Desktop.getDesktop().open(archivoGenerado);
+                    Desktop.getDesktop().open(archivoGenerado);
                 }
             } catch (Exception ex) {
                 System.err.println("Error al intentar abrir el PDF: " + ex.getMessage());

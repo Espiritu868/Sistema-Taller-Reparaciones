@@ -60,12 +60,10 @@ public class ClienteDAO {
     
     public List<Cliente> buscar(String texto) {
         List<Cliente> listaClientes = new ArrayList<>();
-        // Busca coincidencias, pero asegurándose de ignorar a los eliminados
         String sql = "SELECT * FROM Clientes WHERE apellido != 'ELIMINADO' AND (numero_identidad LIKE ? OR nombre LIKE ? OR apellido LIKE ?)";        
         try (Connection conexion = factory.getConexion();
              PreparedStatement comando = conexion.prepareStatement(sql)) {
             
-            // Los % le dicen a SQL que busque el texto en cualquier parte de la palabra
             String parametro = "%" + texto + "%";
             comando.setString(1, parametro);
             comando.setString(2, parametro);
@@ -108,7 +106,6 @@ public class ClienteDAO {
     }
 
     public boolean eliminar(int idCliente) {
-        // Usamos CONCAT para que la identidad falsa sea única agregándole el ID al final
         String sql = "UPDATE Clientes SET numero_identidad = CONCAT('0000-0000-', id_cliente), nombre = '***', apellido = 'ELIMINADO', telefono = '********', correo = '***' WHERE id_cliente = ?";
         
         try (Connection conexion = factory.getConexion();
@@ -123,24 +120,20 @@ public class ClienteDAO {
         }
     }
     
-    // Este es el método NUEVO que creamos para revisar si el cliente tiene historial
     public boolean tieneHistorial(int idCliente) {
         String sql = "SELECT COUNT(*) FROM Equipos_Registrados WHERE id_cliente = ?";
-        try (java.sql.Connection conexion = factory.getConexion();
-             java.sql.PreparedStatement comando = conexion.prepareStatement(sql)) {
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
              
             comando.setInt(1, idCliente);
-            java.sql.ResultSet rs = comando.executeQuery();
-            
-            if (rs.next()) {
-                // Si el conteo es mayor a 0, significa que SÍ tiene historial
-                return rs.getInt(1) > 0;
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             System.err.println("Error al comprobar historial del cliente: " + e.getMessage());
         }
         return false;
     }
-    
-    
 }

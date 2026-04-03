@@ -10,6 +10,7 @@ import java.util.List;
 import modelo.TipoEquipo;
 
 public class TipoEquipoDAO {
+    
     private ConexionFactory factory;
 
     public TipoEquipoDAO() {
@@ -18,6 +19,7 @@ public class TipoEquipoDAO {
 
     public boolean insertar(TipoEquipo tipo) {
         String sql = "INSERT INTO Tipos_Equipo (nombre_tipo) VALUES (?)";
+        
         try (Connection conexion = factory.getConexion();
              PreparedStatement comando = conexion.prepareStatement(sql)) {
             
@@ -39,7 +41,10 @@ public class TipoEquipoDAO {
              ResultSet resultado = comando.executeQuery()) {
             
             while (resultado.next()) {
-                lista.add(new TipoEquipo(resultado.getInt("id_tipo"), resultado.getString("nombre_tipo")));
+                lista.add(new TipoEquipo(
+                    resultado.getInt("id_tipo"), 
+                    resultado.getString("nombre_tipo")
+                ));
             }
         } catch (SQLException e) {
             System.err.println("Error al listar tipos de equipo: " + e.getMessage());

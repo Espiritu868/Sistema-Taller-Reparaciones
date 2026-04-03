@@ -46,12 +46,11 @@ public class PanelEquipos extends javax.swing.JPanel {
         txtCliente = new javax.swing.JTextField();
         cmbTipo = new javax.swing.JComboBox<>();
         cmbMarca = new javax.swing.JComboBox<>();
-        jLabel6 = new javax.swing.JLabel();
 
         setBackground(new java.awt.Color(255, 255, 255));
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         tablaBusqueda.setModel(new javax.swing.table.DefaultTableModel(
@@ -132,9 +131,6 @@ public class PanelEquipos extends javax.swing.JPanel {
         jPanel1.add(cmbMarca, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 270, 254, -1));
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
-
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/Background3.jpg"))); // NOI18N
-        add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
     }// </editor-fold>//GEN-END:initComponents
     
     private void cargarTipos() {
@@ -307,7 +303,6 @@ public class PanelEquipos extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lblIdentificador;

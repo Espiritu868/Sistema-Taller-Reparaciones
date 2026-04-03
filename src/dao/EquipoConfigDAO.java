@@ -16,7 +16,6 @@ public class EquipoConfigDAO {
         this.factory = new ConexionFactory();
     }
 
-    // Método 1: Trae la lista de todos los Tipos de Equipo
     public List<String> obtenerTiposEquipo() {
         List<String> tipos = new ArrayList<>();
         String sql = "SELECT nombre_tipo FROM tipos_equipo ORDER BY id_tipo ASC";
@@ -34,7 +33,6 @@ public class EquipoConfigDAO {
         return tipos;
     }
 
-    // Método 2: Trae las marcas dependiendo del tipo seleccionado
     public List<String> obtenerMarcasPorTipo(String nombreTipo) {
         List<String> marcas = new ArrayList<>();
         String sql = "SELECT m.nombre_marca FROM marcas m " +

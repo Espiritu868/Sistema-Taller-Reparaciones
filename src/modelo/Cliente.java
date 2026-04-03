@@ -1,6 +1,7 @@
 package modelo;
 
 public class Cliente {
+    
     private int idCliente;
     private String numeroIdentidad;
     private String nombre;
@@ -8,7 +9,8 @@ public class Cliente {
     private String telefono;
     private String correo;
 
-    public Cliente() {}
+    public Cliente() {
+    }
 
     public Cliente(String numeroIdentidad, String nombre, String apellido, String telefono, String correo) {
         this.numeroIdentidad = numeroIdentidad;
