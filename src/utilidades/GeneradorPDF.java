@@ -2,6 +2,8 @@ package utilidades;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.itextpdf.text.pdf.draw.DottedLineSeparator;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -10,117 +12,264 @@ import java.awt.Desktop;
 
 public class GeneradorPDF {
 
+    private final Font fuenteEmpresa = new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD, BaseColor.BLACK);
+    private final Font fuenteTelefono = new Font(Font.FontFamily.HELVETICA, 13, Font.BOLD, BaseColor.BLACK);
+    private final Font fuenteTitulo = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, BaseColor.BLACK);
+    private final Font fuenteEtiqueta = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLD, BaseColor.DARK_GRAY);
+    private final Font fuenteDato = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK);
+    private final Font fuenteMini = new Font(Font.FontFamily.HELVETICA, 7, Font.NORMAL, BaseColor.DARK_GRAY);
+    private final Font fuenteLegal = new Font(Font.FontFamily.HELVETICA, 6, Font.ITALIC, BaseColor.GRAY);
+
     public boolean crearTicket(String idOrden, String cliente, String equipo, String problema, 
-                               String total, String nombreEmpresa, String rtn, String direccion, 
-                               String telefono, String politicaGarantia, String nombreTecnico, String trabajo, 
-                               boolean esRecepcion) {
-
-        Rectangle formatoTicket = new Rectangle(226, 800); 
-        Document documento = new Document(formatoTicket, 10, 10, 10, 10);
-
+                               String total, String nombreEmpresa, String direccionEmpresa, 
+                               String telefonoEmpresa, String politicaGarantia, String nombreTecnico, String trabajo, 
+                               boolean esRecepcion, String tipoEquipo) {
         try {
             String rutaBase = System.getProperty("user.dir") + File.separator + "Tickets_Sairtech";
-            File dirBase = new File(rutaBase);
-            if (!dirBase.exists()) dirBase.mkdir();
+            String subCarpetaCliente = esRecepcion ? "Recepciones" : "Entregas";
+            
+            File dirCliente = new File(rutaBase + File.separator + subCarpetaCliente);
+            File dirTecnico = new File(rutaBase + File.separator + "Tickets_Tecnico");
 
-            String nombreCarpeta = esRecepcion ? "Recepciones" : "Entregas";
-            File directorioFinal = new File(rutaBase + File.separator + nombreCarpeta);
-            if (!directorioFinal.exists()) directorioFinal.mkdir();
+            if (!dirCliente.exists()) dirCliente.mkdirs();
+            if (!dirTecnico.exists()) dirTecnico.mkdirs();
 
             String clienteLimpio = cliente.replace(" ", "_");
-            String nombreArchivo = idOrden + "_" + clienteLimpio + ".pdf";
-            String ruta = directorioFinal.getAbsolutePath() + File.separator + nombreArchivo;
-            
-            PdfWriter.getInstance(documento, new FileOutputStream(ruta));
-            documento.open();
+            String rutaCliente = dirCliente.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_CLIENTE.pdf";
+            String rutaTecnico = dirTecnico.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_TECNICO.pdf";
 
-            Font fuenteLogo = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD);
-            Font fuenteTitulo = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
-            Font fuenteNormal = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL);
-            Font fuenteNegrita = new Font(Font.FontFamily.HELVETICA, 8, Font.BOLD);
-            Font fuenteMini = new Font(Font.FontFamily.HELVETICA, 7, Font.ITALIC);
+            generarArchivoCliente(rutaCliente, idOrden, cliente, equipo, problema, total, nombreEmpresa, direccionEmpresa, telefonoEmpresa, politicaGarantia, nombreTecnico, esRecepcion, trabajo);
 
-            Paragraph header = new Paragraph();
-            header.setAlignment(Element.ALIGN_CENTER);
-            header.add(new Paragraph(nombreEmpresa.toUpperCase() + "\n", fuenteLogo));
-            header.add(new Paragraph(direccion + "\nTel: " + telefono + "\n", fuenteNormal));
-            documento.add(header);
+            boolean esCelular = tipoEquipo != null && (
+                tipoEquipo.toLowerCase().contains("celular") || 
+                tipoEquipo.toLowerCase().contains("telefono") || 
+                tipoEquipo.toLowerCase().contains("teléfono") || 
+                tipoEquipo.toLowerCase().contains("smartphone") || 
+                tipoEquipo.toLowerCase().contains("movil")
+            );
 
-            String tituloPrincipal = esRecepcion ? "COMPROBANTE DE RECEPCIÓN" : "FACTURA DE SERVICIO";
+            generarArchivoTecnico(rutaTecnico, idOrden, cliente, equipo, problema, esCelular, nombreTecnico);
 
-            Paragraph infoOrden = new Paragraph();
-            infoOrden.setAlignment(Element.ALIGN_CENTER);
-            infoOrden.add(new Paragraph("\n" + tituloPrincipal + "\n", fuenteTitulo));
-            infoOrden.add(new Paragraph("Orden #: " + idOrden + "\n", fuenteNormal));
-            infoOrden.add(new Paragraph("Atendido por: " + nombreTecnico + "\n", fuenteNegrita));
-            infoOrden.add(new Paragraph("Fecha: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()) + "\n", fuenteNormal));
-            infoOrden.add(new Paragraph("----------------------------------------\n", fuenteNormal));
-            documento.add(infoOrden);
+            File archivoCliente = new File(rutaCliente);
+            File archivoTecnico = new File(rutaTecnico);
 
-            documento.add(new Paragraph("CLIENTE: ", fuenteNegrita));
-            documento.add(new Paragraph(cliente + "\n", fuenteNormal));
-            documento.add(new Paragraph("EQUIPO: ", fuenteNegrita));
-            documento.add(new Paragraph(equipo + "\n\n", fuenteNormal));
+            javax.print.PrintService impresoraDefault = javax.print.PrintServiceLookup.lookupDefaultPrintService();
 
-            PdfPTable tablaDetalle = new PdfPTable(1);
-            tablaDetalle.setWidthPercentage(100);
-
-            PdfPCell celda = new PdfPCell();
-            celda.setBorder(Rectangle.BOX);
-            celda.setBorderColor(BaseColor.LIGHT_GRAY);
-            celda.setPadding(8);
-            celda.setBackgroundColor(new BaseColor(245, 245, 245)); 
-            
-            Paragraph pContenido = new Paragraph("PROBLEMA/SÍNTOMAS:\n", fuenteNegrita);
-            pContenido.add(new Paragraph(problema + "\n", fuenteNormal));
-            
-            if (!esRecepcion) {
-                pContenido.add(new Paragraph("\nTRABAJO REALIZADO:\n", fuenteNegrita));
-                pContenido.add(new Paragraph(trabajo, fuenteNormal));
-            }
-
-            celda.addElement(pContenido);
-            tablaDetalle.addCell(celda);
-            documento.add(tablaDetalle);
-            documento.add(new Paragraph("\n----------------------------------------\n", fuenteNormal));
-
-            if (!esRecepcion) {
-                Paragraph cobro = new Paragraph("TOTAL A PAGAR: L. " + total + "\n", fuenteTitulo);
-                cobro.setAlignment(Element.ALIGN_RIGHT);
-                documento.add(cobro);
-            } else {
-                Paragraph aviso = new Paragraph("EQUIPO SUJETO A REVISIÓN\n", fuenteNegrita);
-                aviso.setAlignment(Element.ALIGN_CENTER);
-                documento.add(aviso);
-            }
-
-            Paragraph footer = new Paragraph();
-            footer.setAlignment(Element.ALIGN_CENTER);
-            if(esRecepcion) {
-                footer.add(new Paragraph("\nPresente este ticket para retirar su equipo.\nNo nos hacemos responsables por equipos olvidados después de 30 días.\n", fuenteMini));
-            } else {
-                footer.add(new Paragraph("\nPOLÍTICA DE GARANTÍA:\n", fuenteNegrita));
-                footer.add(new Paragraph(politicaGarantia + "\n", fuenteMini));
-            }
-            footer.add(new Paragraph("\n\n__________________________\nFirma de Conformidad", fuenteNormal));
-            documento.add(footer);
-
-            documento.close();
-
-            try {
-                File archivoGenerado = new File(ruta);
-                if (archivoGenerado.exists()) {
-                    Desktop.getDesktop().open(archivoGenerado);
+            if (impresoraDefault != null) {
+                try {
+                    if (archivoCliente.exists()) Desktop.getDesktop().print(archivoCliente);
+                    if (archivoTecnico.exists()) Desktop.getDesktop().print(archivoTecnico);
+                } catch (Exception ex) {
+                    javax.swing.JOptionPane.showMessageDialog(null, 
+                        "La impresora está lista, pero falta asociar un lector PDF en Windows.\nAbriendo documentos en pantalla...", 
+                        "Aviso de Sistema", javax.swing.JOptionPane.WARNING_MESSAGE);
+                        
+                    if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
+                    if (archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
                 }
-            } catch (Exception ex) {
-                System.err.println("Error al intentar abrir el PDF: " + ex.getMessage());
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(null, 
+                    "No se detectó ninguna impresora conectada.\nGenerando tickets en pantalla...", 
+                    "Modo Visual", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                    
+                if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
+                if (archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
             }
 
             return true;
 
         } catch (Exception e) {
-            System.err.println("Error al generar el PDF: " + e.getMessage());
+            System.err.println("Error crítico en GeneradorPDF: " + e.getMessage());
             return false;
         }
+    }
+
+    private void generarArchivoCliente(String ruta, String idOrden, String cliente, String equipo, String problema, 
+                                       String total, String nombreEmpresa, String direccionEmpresa, String telefonoEmpresa, 
+                                       String politicaGarantia, String nombreTecnico, boolean esRecepcion, String trabajo) throws Exception {
+        
+        Document documento = new Document(new Rectangle(226, 800), 12, 12, 15, 15);
+        PdfWriter.getInstance(documento, new FileOutputStream(ruta));
+        documento.open();
+
+        Paragraph header = new Paragraph();
+        header.setAlignment(Element.ALIGN_CENTER);
+        header.add(new Chunk(nombreEmpresa.toUpperCase() + "\n", fuenteEmpresa));
+        header.add(new Chunk(direccionEmpresa + "\n", fuenteEtiqueta));
+        header.add(new Chunk("CEL: " + telefonoEmpresa + "\n", fuenteTelefono));
+        header.setSpacingAfter(5f);
+        documento.add(header);
+
+        LineSeparator lineaSolida = new LineSeparator(1f, 100f, BaseColor.BLACK, Element.ALIGN_CENTER, -2f);
+        documento.add(new Chunk(lineaSolida));
+
+        String tituloStr = esRecepcion ? "ORDEN DE SERVICIO" : "COMPROBANTE DE ENTREGA";
+        Paragraph titulo = new Paragraph(tituloStr, fuenteTitulo);
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        titulo.setSpacingBefore(8f);
+        titulo.setSpacingAfter(8f);
+        documento.add(titulo);
+
+        PdfPTable tablaInfo = new PdfPTable(2);
+        tablaInfo.setWidthPercentage(100);
+        tablaInfo.setWidths(new float[]{35f, 65f}); 
+
+        tablaInfo.addCell(crearCeldaInvalida("TICKET #:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(idOrden, fuenteTitulo));
+
+        tablaInfo.addCell(crearCeldaInvalida("FECHA:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fuenteDato));
+
+        tablaInfo.addCell(crearCeldaInvalida("CLIENTE:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(cliente.toUpperCase(), fuenteDato));
+
+        tablaInfo.addCell(crearCeldaInvalida("EQUIPO:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(equipo, fuenteDato));
+
+        tablaInfo.addCell(crearCeldaInvalida("ATENDIDO POR:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(nombreTecnico.toUpperCase(), fuenteDato));
+        
+        documento.add(tablaInfo);
+        documento.add(new Chunk(lineaSolida));
+
+        PdfPTable tablaProblema = new PdfPTable(1);
+        tablaProblema.setWidthPercentage(100);
+        tablaProblema.setSpacingBefore(10f);
+        
+        PdfPCell celdaTituloFalla = new PdfPCell(new Phrase(esRecepcion ? "SÍNTOMAS / FALLA REPORTADA:" : "TRABAJO REALIZADO:", fuenteEtiqueta));
+        celdaTituloFalla.setBorder(Rectangle.NO_BORDER);
+        tablaProblema.addCell(celdaTituloFalla);
+        
+        PdfPCell celdaFalla = new PdfPCell(new Phrase(esRecepcion ? problema : trabajo, fuenteDato));
+        celdaFalla.setPadding(8f);
+        celdaFalla.setBackgroundColor(new BaseColor(245, 245, 245));
+        celdaFalla.setBorderColor(BaseColor.LIGHT_GRAY);
+        tablaProblema.addCell(celdaFalla);
+        
+        documento.add(tablaProblema);
+
+        Paragraph footer = new Paragraph();
+        footer.setAlignment(Element.ALIGN_CENTER);
+        footer.setSpacingBefore(15f);
+
+        if (!esRecepcion) {
+            Paragraph cobro = new Paragraph("TOTAL PAGADO: L. " + total, fuenteTitulo);
+            cobro.setAlignment(Element.ALIGN_RIGHT);
+            cobro.setSpacingAfter(10f);
+            documento.add(cobro);
+            
+            footer.add(new Chunk("POLÍTICA DE GARANTÍA\n", fuenteEtiqueta));
+            footer.add(new Chunk(politicaGarantia + "\n", fuenteMini));
+            documento.add(footer);
+        } else {
+            PdfPTable tablaCondiciones = new PdfPTable(1);
+            tablaCondiciones.setWidthPercentage(100);
+            tablaCondiciones.setSpacingBefore(15f);
+            
+            PdfPCell celdaCond = new PdfPCell();
+            celdaCond.setBorderColor(BaseColor.GRAY);
+            celdaCond.setBackgroundColor(new BaseColor(250, 250, 250));
+            celdaCond.setPadding(8f);
+
+            Paragraph tituloCond = new Paragraph("TÉRMINOS Y CONDICIONES DEL SERVICIO\n\n", fuenteEtiqueta);
+            tituloCond.setAlignment(Element.ALIGN_CENTER);
+            celdaCond.addElement(tituloCond);
+
+            String terminos = "1. ABANDONO: Todo equipo no reclamado pasados 30 días calendario desde su ingreso, pasará a ser propiedad del taller para cubrir costos de revisión y almacenaje.\n\n" +
+                              "2. REVISIÓN: El diagnóstico de equipos tiene un cargo no reembolsable de L. 100.00 en caso de no autorizar la reparación.\n\n" +
+                              "3. RETIRO: Es estrictamente obligatorio presentar este comprobante (físico o foto legible) para la entrega de su equipo.\n\n" +
+                              "4. DATOS: No nos responsabilizamos por la pérdida de información o archivos durante el servicio.\n\n" +
+                              "5. RIESGOS: Equipos mojados, muy golpeados o que no encienden, se reciben bajo el propio riesgo del cliente.";
+
+            Paragraph cuerpoCond = new Paragraph(terminos, fuenteMini);
+            cuerpoCond.setAlignment(Element.ALIGN_JUSTIFIED);
+            celdaCond.addElement(cuerpoCond);
+
+            Paragraph aceptacion = new Paragraph("\n* Al entregar su equipo y recibir este documento, usted acepta todas las condiciones anteriormente descritas.", fuenteLegal);
+            aceptacion.setAlignment(Element.ALIGN_CENTER);
+            celdaCond.addElement(aceptacion);
+
+            tablaCondiciones.addCell(celdaCond);
+            documento.add(tablaCondiciones);
+        }
+
+        DottedLineSeparator lineaPunteada = new DottedLineSeparator();
+        lineaPunteada.setGap(3f);
+        
+        documento.add(new Paragraph("\n\n"));
+        documento.add(new Chunk(lineaPunteada));
+        Paragraph firma = new Paragraph("Firma de Conformidad del Cliente\n\n", fuenteEtiqueta);
+        firma.setAlignment(Element.ALIGN_CENTER);
+        documento.add(firma);
+        
+        documento.close();
+    }
+
+    private void generarArchivoTecnico(String ruta, String idOrden, String cliente, String equipo, 
+                                       String problema, boolean esCelular, String nombreTecnico) throws Exception {
+        
+        // Reducción extrema a 145f (aprox 5.1 cm) para celulares
+        float alto = esCelular ? 145f : 550f; 
+        
+        // Márgenes mínimos de 3pt para aprovechar cada rincón
+        Document documento = new Document(new Rectangle(226, alto), 5, 5, 3, 3); 
+        PdfWriter writer = PdfWriter.getInstance(documento, new FileOutputStream(ruta));
+        documento.open();
+
+        // Usamos una fuente de 8pt para que todo quepa en menos espacio
+        Font fuenteMiniDato = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.BLACK);
+        Font fuenteMiniEtiqueta = new Font(Font.FontFamily.HELVETICA, 7, Font.BOLD, BaseColor.DARK_GRAY);
+
+        PdfPTable tablaInfo = new PdfPTable(2);
+        tablaInfo.setWidthPercentage(100);
+        tablaInfo.setWidths(new float[]{50f, 50f}); // 50/50 para poner datos a la par
+
+        // Fila 1: ID y Equipo (Optimizando espacio horizontal)
+        tablaInfo.addCell(crearCeldaInvalida("ORDEN: " + idOrden, fuenteMiniEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida("EQ: " + equipo, fuenteMiniDato));
+
+        // Fila 2: Cliente y Técnico
+        tablaInfo.addCell(crearCeldaInvalida("CLI: " + (cliente.length() > 12 ? cliente.substring(0, 12) : cliente), fuenteMiniDato));
+        tablaInfo.addCell(crearCeldaInvalida("TEC: " + nombreTecnico, fuenteMiniDato));
+
+        documento.add(tablaInfo);
+        
+        // Falla en texto pequeño y sin etiquetas pesadas
+        Paragraph falla = new Paragraph("F: " + problema, fuenteMiniDato);
+        falla.setSpacingBefore(0f);
+        falla.setSpacingAfter(2f);
+        documento.add(falla);
+
+        if (esCelular) {
+            Barcode128 barcode = new Barcode128();
+            barcode.setCode(idOrden);
+            barcode.setBarHeight(20f); // Barras bien bajas para ahorrar altura
+            barcode.setSize(7f);      // Texto del número debajo del código más pequeño
+            
+            Image imgBarcode = barcode.createImageWithBarcode(writer.getDirectContent(), BaseColor.BLACK, BaseColor.BLACK);
+            imgBarcode.setAlignment(Element.ALIGN_CENTER);
+            imgBarcode.scalePercent(110); 
+            
+            documento.add(imgBarcode);
+            
+            // Línea de notas ultra compacta
+            Paragraph notas = new Paragraph("NOTAS:____________________", fuenteMiniEtiqueta);
+            notas.setAlignment(Element.ALIGN_CENTER);
+            documento.add(notas);
+            
+        } else {
+            documento.add(new Chunk(new LineSeparator(0.5f, 100, BaseColor.LIGHT_GRAY, Element.ALIGN_CENTER, 0)));
+            documento.add(new Paragraph("TRABAJO/REPUESTOS:", fuenteMiniEtiqueta));
+            documento.add(new Paragraph("\n\n\n\n________________________", fuenteMiniDato));
+        }
+
+        documento.close();
+    }
+
+    private PdfPCell crearCeldaInvalida(String texto, Font fuente) {
+        PdfPCell celda = new PdfPCell(new Phrase(texto, fuente));
+        celda.setBorder(Rectangle.NO_BORDER);
+        celda.setPaddingBottom(4f);
+        return celda;
     }
 }

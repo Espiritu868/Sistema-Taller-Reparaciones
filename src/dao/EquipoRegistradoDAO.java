@@ -18,9 +18,10 @@ public class EquipoRegistradoDAO {
     
     public List<Object[]> buscarEquipoCompleto(String texto) {
         List<Object[]> lista = new ArrayList<>();
-        String sql = "SELECT e.id_equipo, e.modelo, e.imei_serie, c.nombre, c.apellido " +
+        String sql = "SELECT e.id_equipo, e.modelo, e.imei_serie, c.nombre, c.apellido, t.nombre_tipo " +
                      "FROM Equipos_Registrados e " +
                      "JOIN Clientes c ON e.id_cliente = c.id_cliente " +
+                     "JOIN tipos_equipo t ON e.id_tipo = t.id_tipo " + 
                      "WHERE e.modelo LIKE ? OR e.imei_serie LIKE ? " +
                      "OR c.nombre LIKE ? OR c.apellido LIKE ? OR c.numero_identidad LIKE ?";
         
@@ -37,11 +38,13 @@ public class EquipoRegistradoDAO {
             
             try (ResultSet rs = comando.executeQuery()) {
                 while (rs.next()) {
-                    Object[] fila = new Object[4];
+                    Object[] fila = new Object[5]; 
                     fila[0] = rs.getInt("id_equipo");
                     fila[1] = rs.getString("modelo");
                     fila[2] = rs.getString("imei_serie");
                     fila[3] = rs.getString("nombre") + " " + rs.getString("apellido");
+                    fila[4] = rs.getString("nombre_tipo"); 
+                    
                     lista.add(fila);
                 }
             }

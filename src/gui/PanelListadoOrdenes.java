@@ -334,15 +334,23 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
                     String[] detalles = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
                     String trabajoRealizado = (detalles[1] != null && !detalles[1].isEmpty()) ? detalles[1] : "Revisión técnica general.";
 
+                    int modelRow = tablaGeneral.convertRowIndexToModel(fila);
+                    String tipoEquipo = tablaGeneral.getModel().getValueAt(modelRow, 6).toString();
+
                     boolean ticketCreado = generador.crearTicket(
                         idOrden,
-                        tablaGeneral.getValueAt(fila, 1).toString().trim(),
-                        tablaGeneral.getValueAt(fila, 2).toString().trim(),
-                        tablaGeneral.getValueAt(fila, 3).toString().trim(),
+                        tablaGeneral.getValueAt(fila, 1).toString().trim(), // Cliente
+                        tablaGeneral.getValueAt(fila, 2).toString().trim(), // Equipo
+                        tablaGeneral.getValueAt(fila, 3).toString().trim(), // Problema
                         costoTotal,
-                        "SAIRTECH - TECNOLOGIA", "1601-2003-XXXXXX", "Santa Bárbara, HN", "+504 8951-8040",
-                        "OJO no aplica garantia en equipos mojados, pantallas no cuentan con garantía.", v.getNombreUsuarioActivo(), trabajoRealizado,
-                        false
+                        "SAIRTECH - TECNOLOGIA", 
+                        "Santa Barbara, Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", // Nueva dirección
+                        "8951-8040", // Nuevo teléfono
+                        "OJO no aplica garantia en equipos mojados, pantallas no cuentan con garantía.", 
+                        v.getNombreUsuarioActivo(), 
+                        trabajoRealizado,
+                        false, 
+                        tipoEquipo
                     );
 
                     if (ticketCreado) {

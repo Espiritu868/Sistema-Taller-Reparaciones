@@ -4,6 +4,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
     
     
     private int idEquipoSeleccionado = -1;
+    private String tipoEquipoSeleccionado = "";
     
     public PanelOrdenes() {
         initComponents();      
@@ -195,10 +196,24 @@ public class PanelOrdenes extends javax.swing.JPanel {
                 String nroOrdenStr = String.valueOf(idGenerado);
                 
                 // Generar el ticket
-                boolean ok = gen.crearTicket(nroOrdenStr, cliente, equipo, problema, "0.00", 
-                        "SAIRTECH", "1601-2003-XXXXXX", "Santa Bárbara, HN", "+504 9999-9999", 
-                        "Garantía de 30 días en mano de obra.", tecnicoActivo, trabajo, 
-                        true);
+                String tipoAImprimir = (tipoEquipoSeleccionado != null && !tipoEquipoSeleccionado.isEmpty()) ? tipoEquipoSeleccionado : "Generico";
+
+// Generar el ticket (nota que agregamos 'tipoAImprimir' al final)
+            boolean ok = gen.crearTicket(
+            nroOrdenStr, 
+            cliente, 
+            equipo, 
+            problema, 
+            "0.00", 
+            "SAIRTECH", 
+            "Santa Barbara, Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", 
+            "8951-8040", 
+            "Garantía de 30 días en mano de obra.", 
+            tecnicoActivo, 
+            trabajo, 
+            true, 
+            tipoAImprimir
+            );  
 
                 if (ok) {
                     javax.swing.JOptionPane.showMessageDialog(this, "¡Orden #" + nroOrdenStr + " Guardada exitosamente!", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
@@ -215,6 +230,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
             txtTrabajo.setText("Escribe aquí la reparación realizada.");
             cmbEstado.setSelectedIndex(0);
             idEquipoSeleccionado = -1;
+            tipoEquipoSeleccionado = "";
             cargarTablaBuscador("");
             
         } else {
@@ -236,7 +252,9 @@ public class PanelOrdenes extends javax.swing.JPanel {
                 this.idEquipoSeleccionado = Integer.parseInt(tablaBusquedaEquipo.getValueAt(fila, 0).toString());
 
                 String modelo = tablaBusquedaEquipo.getValueAt(fila, 1).toString();
-                String dueno = tablaBusquedaEquipo.getValueAt(fila, 3).toString();
+
+                String dueno = tablaBusquedaEquipo.getValueAt(fila, 2).toString(); 
+                this.tipoEquipoSeleccionado = tablaBusquedaEquipo.getValueAt(fila, 3).toString(); 
 
                 txtEquipo.setText(modelo);
                 txtNombre.setText(dueno);
@@ -310,9 +328,8 @@ public class PanelOrdenes extends javax.swing.JPanel {
         dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
         
         java.util.List<Object[]> lista = daoEquipo.buscarEquipoCompleto(texto);
-
         javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
-            new Object[]{"ID", "Modelo", "Serie/IMEI", "Dueño"}, 0
+            new Object[]{"ID", "Modelo", "Dueño", "Tipo"}, 0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -320,17 +337,24 @@ public class PanelOrdenes extends javax.swing.JPanel {
             }
         };
 
-        for (Object[] fila : lista) {
-            modeloTabla.addRow(fila);
+        for (Object[] filaAnterior : lista) {
+            Object[] filaNueva = new Object[4];
+            filaNueva[0] = filaAnterior[0]; // ID
+            filaNueva[1] = filaAnterior[1]; // Modelo
+            filaNueva[2] = filaAnterior[3]; // Dueño
+            filaNueva[3] = filaAnterior[4]; // Tipo
+            
+            modeloTabla.addRow(filaNueva);
         }
 
         tablaBusquedaEquipo.setModel(modeloTabla);
 
+        // 3. Ajustamos los anchos a las nuevas 4 columnas
         if (tablaBusquedaEquipo.getColumnModel().getColumnCount() > 0) {
             tablaBusquedaEquipo.getColumnModel().getColumn(0).setPreferredWidth(40);
-            tablaBusquedaEquipo.getColumnModel().getColumn(1).setPreferredWidth(150);
-            tablaBusquedaEquipo.getColumnModel().getColumn(2).setPreferredWidth(150);
-            tablaBusquedaEquipo.getColumnModel().getColumn(3).setPreferredWidth(200);
+            tablaBusquedaEquipo.getColumnModel().getColumn(1).setPreferredWidth(200);
+            tablaBusquedaEquipo.getColumnModel().getColumn(2).setPreferredWidth(250);
+            tablaBusquedaEquipo.getColumnModel().getColumn(3).setPreferredWidth(100);
         }
     }
     
@@ -407,7 +431,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
 
         // Text Areas grandes para Problema y Trabajo
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Problema Reportado:"), gbc);
-        gbc.weighty = 0.3;
+        gbc.weighty = 0.3;  
         panelProblema.setPreferredSize(new java.awt.Dimension(0, 80));
         txtProblema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
         txtProblema.setLineWrap(true);
