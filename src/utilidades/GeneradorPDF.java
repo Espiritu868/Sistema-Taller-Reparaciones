@@ -38,17 +38,20 @@ public class GeneradorPDF {
             String rutaCliente = dirCliente.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_CLIENTE.pdf";
             String rutaTecnico = dirTecnico.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_TECNICO.pdf";
 
+            // 1. Siempre generamos el ticket del cliente
             generarArchivoCliente(rutaCliente, idOrden, cliente, equipo, problema, total, nombreEmpresa, direccionEmpresa, telefonoEmpresa, politicaGarantia, nombreTecnico, esRecepcion, trabajo);
 
-            boolean esCelular = tipoEquipo != null && (
-                tipoEquipo.toLowerCase().contains("celular") || 
-                tipoEquipo.toLowerCase().contains("telefono") || 
-                tipoEquipo.toLowerCase().contains("teléfono") || 
-                tipoEquipo.toLowerCase().contains("smartphone") || 
-                tipoEquipo.toLowerCase().contains("movil")
-            );
-
-            generarArchivoTecnico(rutaTecnico, idOrden, cliente, equipo, problema, esCelular, nombreTecnico);
+            // 2. Solo generamos el ticket del técnico si es una Recepción
+            if (esRecepcion) {
+                boolean esCelular = tipoEquipo != null && (
+                    tipoEquipo.toLowerCase().contains("celular") || 
+                    tipoEquipo.toLowerCase().contains("telefono") || 
+                    tipoEquipo.toLowerCase().contains("teléfono") || 
+                    tipoEquipo.toLowerCase().contains("smartphone") || 
+                    tipoEquipo.toLowerCase().contains("movil")
+                );
+                generarArchivoTecnico(rutaTecnico, idOrden, cliente, equipo, problema, esCelular, nombreTecnico);
+            }
 
             File archivoCliente = new File(rutaCliente);
             File archivoTecnico = new File(rutaTecnico);
@@ -58,14 +61,14 @@ public class GeneradorPDF {
             if (impresoraDefault != null) {
                 try {
                     if (archivoCliente.exists()) Desktop.getDesktop().print(archivoCliente);
-                    if (archivoTecnico.exists()) Desktop.getDesktop().print(archivoTecnico);
+                    if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().print(archivoTecnico);
                 } catch (Exception ex) {
                     javax.swing.JOptionPane.showMessageDialog(null, 
                         "La impresora está lista, pero falta asociar un lector PDF en Windows.\nAbriendo documentos en pantalla...", 
                         "Aviso de Sistema", javax.swing.JOptionPane.WARNING_MESSAGE);
                         
                     if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
-                    if (archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
+                    if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
                 }
             } else {
                 javax.swing.JOptionPane.showMessageDialog(null, 
@@ -73,7 +76,7 @@ public class GeneradorPDF {
                     "Modo Visual", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                     
                 if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
-                if (archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
+                if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
             }
 
             return true;
@@ -126,7 +129,7 @@ public class GeneradorPDF {
         tablaInfo.addCell(crearCeldaInvalida("EQUIPO:", fuenteEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida(equipo, fuenteDato));
 
-        tablaInfo.addCell(crearCeldaInvalida("ATENDIDO POR:", fuenteEtiqueta));
+        tablaInfo.addCell(crearCeldaInvalida(esRecepcion ? "ATENDIDO POR:" : "ENTREGADO POR:", fuenteEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida(nombreTecnico.toUpperCase(), fuenteDato));
         
         documento.add(tablaInfo);
@@ -148,20 +151,47 @@ public class GeneradorPDF {
         
         documento.add(tablaProblema);
 
-        Paragraph footer = new Paragraph();
-        footer.setAlignment(Element.ALIGN_CENTER);
-        footer.setSpacingBefore(15f);
-
         if (!esRecepcion) {
+            // DISEÑO DEL TICKET DE ENTREGA CON LA PÓLIZA DE GARANTÍA
             Paragraph cobro = new Paragraph("TOTAL PAGADO: L. " + total, fuenteTitulo);
             cobro.setAlignment(Element.ALIGN_RIGHT);
+            cobro.setSpacingBefore(10f);
             cobro.setSpacingAfter(10f);
             documento.add(cobro);
             
-            footer.add(new Chunk("POLÍTICA DE GARANTÍA\n", fuenteEtiqueta));
-            footer.add(new Chunk(politicaGarantia + "\n", fuenteMini));
-            documento.add(footer);
+            PdfPTable tablaGarantia = new PdfPTable(1);
+            tablaGarantia.setWidthPercentage(100);
+            tablaGarantia.setSpacingBefore(10f);
+            
+            PdfPCell celdaGar = new PdfPCell();
+            celdaGar.setBorderColor(BaseColor.GRAY);
+            celdaGar.setBackgroundColor(new BaseColor(250, 250, 250));
+            celdaGar.setPadding(8f);
+
+            Paragraph tituloGar = new Paragraph("PÓLIZA DE GARANTÍA\n\n", fuenteEtiqueta);
+            tituloGar.setAlignment(Element.ALIGN_CENTER);
+            celdaGar.addElement(tituloGar);
+
+            String terminosGarantia = "NOTA: " + politicaGarantia + "\n\n" +
+                              "1. COBERTURA: Válida exclusivamente por defectos de fábrica del repuesto instalado o en la mano de obra realizada.\n\n" +
+                              "2. EXCLUSIONES: Se anula automáticamente la garantía por rastros de humedad, golpes, presión excesiva o uso de cargadores genéricos.\n\n" +
+                              "3. SELLOS: La remoción, ruptura o alteración de los sellos de seguridad del taller invalidan cualquier reclamo.\n\n" +
+                              "4. SOFTWARE: Los trabajos de sistema, cuentas o liberación no tienen garantía contra bloqueos futuros por actualizaciones del usuario.\n\n" +
+                              "5. REQUISITO: Es estrictamente necesario presentar este ticket para procesar cualquier validación de garantía.";
+
+            Paragraph cuerpoGar = new Paragraph(terminosGarantia, fuenteMini);
+            cuerpoGar.setAlignment(Element.ALIGN_JUSTIFIED);
+            celdaGar.addElement(cuerpoGar);
+
+            Paragraph aceptacionGar = new Paragraph("\n* Revise su equipo antes de retirarse. Su firma confirma que recibe el equipo reparado y funcionando a entera satisfacción.", fuenteLegal);
+            aceptacionGar.setAlignment(Element.ALIGN_CENTER);
+            celdaGar.addElement(aceptacionGar);
+
+            tablaGarantia.addCell(celdaGar);
+            documento.add(tablaGarantia);
+            
         } else {
+            // DISEÑO DEL TICKET DE RECEPCIÓN
             PdfPTable tablaCondiciones = new PdfPTable(1);
             tablaCondiciones.setWidthPercentage(100);
             tablaCondiciones.setSpacingBefore(15f);
@@ -208,33 +238,26 @@ public class GeneradorPDF {
     private void generarArchivoTecnico(String ruta, String idOrden, String cliente, String equipo, 
                                        String problema, boolean esCelular, String nombreTecnico) throws Exception {
         
-        // Reducción extrema a 145f (aprox 5.1 cm) para celulares
         float alto = esCelular ? 145f : 550f; 
-        
-        // Márgenes mínimos de 3pt para aprovechar cada rincón
         Document documento = new Document(new Rectangle(226, alto), 5, 5, 3, 3); 
         PdfWriter writer = PdfWriter.getInstance(documento, new FileOutputStream(ruta));
         documento.open();
 
-        // Usamos una fuente de 8pt para que todo quepa en menos espacio
         Font fuenteMiniDato = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.BLACK);
         Font fuenteMiniEtiqueta = new Font(Font.FontFamily.HELVETICA, 7, Font.BOLD, BaseColor.DARK_GRAY);
 
         PdfPTable tablaInfo = new PdfPTable(2);
         tablaInfo.setWidthPercentage(100);
-        tablaInfo.setWidths(new float[]{50f, 50f}); // 50/50 para poner datos a la par
+        tablaInfo.setWidths(new float[]{50f, 50f}); 
 
-        // Fila 1: ID y Equipo (Optimizando espacio horizontal)
         tablaInfo.addCell(crearCeldaInvalida("ORDEN: " + idOrden, fuenteMiniEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida("EQ: " + equipo, fuenteMiniDato));
 
-        // Fila 2: Cliente y Técnico
         tablaInfo.addCell(crearCeldaInvalida("CLI: " + (cliente.length() > 12 ? cliente.substring(0, 12) : cliente), fuenteMiniDato));
         tablaInfo.addCell(crearCeldaInvalida("TEC: " + nombreTecnico, fuenteMiniDato));
 
         documento.add(tablaInfo);
         
-        // Falla en texto pequeño y sin etiquetas pesadas
         Paragraph falla = new Paragraph("F: " + problema, fuenteMiniDato);
         falla.setSpacingBefore(0f);
         falla.setSpacingAfter(2f);
@@ -243,8 +266,8 @@ public class GeneradorPDF {
         if (esCelular) {
             Barcode128 barcode = new Barcode128();
             barcode.setCode(idOrden);
-            barcode.setBarHeight(20f); // Barras bien bajas para ahorrar altura
-            barcode.setSize(7f);      // Texto del número debajo del código más pequeño
+            barcode.setBarHeight(20f); 
+            barcode.setSize(7f);      
             
             Image imgBarcode = barcode.createImageWithBarcode(writer.getDirectContent(), BaseColor.BLACK, BaseColor.BLACK);
             imgBarcode.setAlignment(Element.ALIGN_CENTER);
@@ -252,7 +275,6 @@ public class GeneradorPDF {
             
             documento.add(imgBarcode);
             
-            // Línea de notas ultra compacta
             Paragraph notas = new Paragraph("NOTAS:____________________", fuenteMiniEtiqueta);
             notas.setAlignment(Element.ALIGN_CENTER);
             documento.add(notas);

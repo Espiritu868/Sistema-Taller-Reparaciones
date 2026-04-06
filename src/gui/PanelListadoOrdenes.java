@@ -17,6 +17,10 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         initComponents();
         aplicarDisenoModerno();
         refrescarTabla();
+        cmbFiltroEstado.setEditable(false);
+        
+        // Bloqueamos el ComboBox para que el usuario no pueda cambiarlo manualmente
+        cmbNuevoEstado.setEnabled(false);
     }
     
     private void cargarTabla(List<Object[]> datos) {
@@ -127,7 +131,19 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         
         gbc.gridy = 6; gbc.insets = new Insets(10, 0, 5, 0);
         panelGestion.add(new JLabel("Estado:"), gbc);
-        gbc.gridy = 7; panelGestion.add(cmbNuevoEstado, gbc);
+        
+        // Creamos un mini-panel para poner el ComboBox y el candado juntos
+        JPanel panelEstado = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        panelEstado.setBackground(Color.WHITE);
+        panelEstado.add(cmbNuevoEstado);
+        
+        JButton btnDesbloquear = new JButton("🔓");
+        btnDesbloquear.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnDesbloquear.setToolTipText("Forzar cambio de estado (Solo Admin)");
+        btnDesbloquear.addActionListener(evt -> btnDesbloquearActionPerformed(evt));
+        panelEstado.add(btnDesbloquear);
+
+        gbc.gridy = 7; panelGestion.add(panelEstado, gbc);
 
         gbc.gridy = 8; gbc.insets = new Insets(10, 0, 5, 0);
         panelGestion.add(new JLabel("Costo Final (L.):"), gbc);
@@ -238,7 +254,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         panelContenedor.add(txtIdOrden, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 20, 90, 30));
 
         cmbNuevoEstado.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        cmbNuevoEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { " ", "Recibido", "En Revision", "Reparado", "Entregado", "Sin Reparacion" }));
+        cmbNuevoEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Recibido", "En Revision", "Reparado", "Entregado", "Sin Reparacion" }));
         panelContenedor.add(cmbNuevoEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 20, 150, 30));
 
         jLabel3.setFont(new java.awt.Font("Arial", 0, 18)); // NOI18N
@@ -365,7 +381,20 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
             }
         }
     }//GEN-LAST:event_btnEntregarActionPerformed
-
+    
+    private void btnDesbloquearActionPerformed(java.awt.event.ActionEvent evt) {                                                     
+        if (txtIdOrden.getText().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla primero.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Llamamos al guardia de seguridad (tu validación en BD)
+        if (solicitarPermisoAdmin()) {
+            cmbNuevoEstado.setEnabled(true); // ¡Se abre el candado!
+            javax.swing.JOptionPane.showMessageDialog(this, "Estado desbloqueado. Elija el nuevo estado y presione 'Actualizar Orden'.", "Autorizado", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
     private void btnEditarDetallesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarDetallesActionPerformed
         if (txtIdOrden.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
@@ -453,6 +482,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
 
             if (daoOrden.actualizarEstadoYCosto(id, estado, costo)) {
                 JOptionPane.showMessageDialog(this, "¡Orden actualizada correctamente!");
+                cmbNuevoEstado.setEnabled(false);
                 refrescarTabla();
             }
         } catch (NumberFormatException e) {
@@ -500,4 +530,35 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     private javax.swing.JTextField txtCostoFinal;
     private javax.swing.JTextField txtIdOrden;
     // End of variables declaration//GEN-END:variables
+    
+    private boolean solicitarPermisoAdmin() {
+        javax.swing.JTextField txtUser = new javax.swing.JTextField();
+        javax.swing.JPasswordField txtPass = new javax.swing.JPasswordField();
+        
+        Object[] mensaje = {
+            "Se requieren permisos de Administrador para cambiar el estado manualmente.",
+            "Usuario:", txtUser,
+            "Contraseña:", txtPass
+        };
+
+        int opcion = javax.swing.JOptionPane.showConfirmDialog(this, mensaje, "Autorización de SairTech", 
+                     javax.swing.JOptionPane.OK_CANCEL_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
+                     
+        if (opcion == javax.swing.JOptionPane.OK_OPTION) {
+            String usuario = txtUser.getText();
+            String clave = new String(txtPass.getPassword());
+            
+            dao.UsuarioDAO daoUsuario = new dao.UsuarioDAO();
+            String rol = daoUsuario.validarLogin(usuario, clave);
+            if (!rol.equals("ERROR") && (rol.equalsIgnoreCase("Administrador") || rol.equalsIgnoreCase("Admin"))) {
+                return true;
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Credenciales incorrectas o el usuario no tiene privilegios de Administrador.", 
+                    "Acceso Denegado", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+        return false;
+    }
 }
