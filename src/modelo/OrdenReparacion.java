@@ -11,8 +11,11 @@ public class OrdenReparacion {
     private double costo;
     private String estado;
     
-    // --- NUEVA VARIABLE AÑADIDA PARA CUMPLIR LA 3FN ---
+    // --- VARIABLE PARA CUMPLIR LA 3FN ---
     private int idUsuarioEntrega;
+
+    // --- NUEVA VARIABLE PARA CLAVE/PATRÓN DEL DISPOSITIVO ---
+    private String seguridadDispositivo; 
 
     public OrdenReparacion() {}
 
@@ -34,6 +37,7 @@ public class OrdenReparacion {
         this.estado = estado;
     }
 
+    // Getters y Setters existentes
     public int getIdOrden() { return idOrden; }
     public void setIdOrden(int idOrden) { this.idOrden = idOrden; }
     
@@ -55,7 +59,10 @@ public class OrdenReparacion {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
-    // --- NUEVOS MÉTODOS GET Y SET PARA EL USUARIO ---
     public int getIdUsuarioEntrega() { return idUsuarioEntrega; }
     public void setIdUsuarioEntrega(int idUsuarioEntrega) { this.idUsuarioEntrega = idUsuarioEntrega; }
+
+    // --- NUEVOS MÉTODOS GET Y SET PARA LA SEGURIDAD ---
+    public String getSeguridadDispositivo() { return seguridadDispositivo; }
+    public void setSeguridadDispositivo(String seguridadDispositivo) { this.seguridadDispositivo = seguridadDispositivo; }
 }

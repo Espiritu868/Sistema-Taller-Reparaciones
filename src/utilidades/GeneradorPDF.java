@@ -6,12 +6,11 @@ import com.itextpdf.text.pdf.draw.DottedLineSeparator;
 import com.itextpdf.text.pdf.draw.LineSeparator;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.awt.Desktop;
 
 public class GeneradorPDF {
 
+    // --- FUENTES DEL DISEÑO ORIGINAL ---
     private final Font fuenteEmpresa = new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD, BaseColor.BLACK);
     private final Font fuenteTelefono = new Font(Font.FontFamily.HELVETICA, 13, Font.BOLD, BaseColor.BLACK);
     private final Font fuenteTitulo = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, BaseColor.BLACK);
@@ -20,11 +19,24 @@ public class GeneradorPDF {
     private final Font fuenteMini = new Font(Font.FontFamily.HELVETICA, 7, Font.NORMAL, BaseColor.DARK_GRAY);
     private final Font fuenteLegal = new Font(Font.FontFamily.HELVETICA, 6, Font.ITALIC, BaseColor.GRAY);
 
-    public boolean crearTicket(String idOrden, String cliente, String equipo, String problema, 
+    public boolean crearTicket(String idOrden, String fecha, String cliente, String equipo, String problema, 
                                String total, String nombreEmpresa, String direccionEmpresa, 
                                String telefonoEmpresa, String politicaGarantia, String nombreTecnico, String trabajo, 
-                               boolean esRecepcion, String tipoEquipo) {
+                               boolean esRecepcion, String tipoEquipo, boolean abrirAlFinal) {
         try {
+            // --- PROCESAMIENTO DE SEGURIDAD (PIN/PATRÓN) ---
+            String claveExtraida = "Sin Clave";
+            String equipoLimpio = equipo;
+            
+            if (equipo.contains("|  Clave:")) {
+                String[] partes = equipo.split("\\|  Clave:");
+                equipoLimpio = partes[0].trim();
+                if (partes.length > 1) {
+                    claveExtraida = partes[1].trim();
+                }
+            }
+
+            // --- RUTAS Y DIRECTORIOS ---
             String rutaBase = System.getProperty("user.dir") + File.separator + "Tickets_Sairtech";
             String subCarpetaCliente = esRecepcion ? "Recepciones" : "Entregas";
             
@@ -35,13 +47,14 @@ public class GeneradorPDF {
             if (!dirTecnico.exists()) dirTecnico.mkdirs();
 
             String clienteLimpio = cliente.replace(" ", "_");
-            String rutaCliente = dirCliente.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_CLIENTE.pdf";
-            String rutaTecnico = dirTecnico.getAbsolutePath() + File.separator + idOrden + "_" + clienteLimpio + "_TECNICO.pdf";
+            String rutaCliente = dirCliente.getAbsolutePath() + File.separator + "Ticket_" + idOrden + "_" + clienteLimpio + "_CLIENTE.pdf";
+            String rutaTecnico = dirTecnico.getAbsolutePath() + File.separator + "Ticket_" + idOrden + "_" + clienteLimpio + "_TECNICO.pdf";
 
-            // 1. Siempre generamos el ticket del cliente
-            generarArchivoCliente(rutaCliente, idOrden, cliente, equipo, problema, total, nombreEmpresa, direccionEmpresa, telefonoEmpresa, politicaGarantia, nombreTecnico, esRecepcion, trabajo);
+            // 1. Generamos el ticket del cliente usando la fecha exacta proporcionada
+            generarArchivoCliente(rutaCliente, idOrden, fecha, cliente, equipoLimpio, problema, total, nombreEmpresa, 
+                                  direccionEmpresa, telefonoEmpresa, politicaGarantia, nombreTecnico, esRecepcion, trabajo, claveExtraida, tipoEquipo);
 
-            // 2. Solo generamos el ticket del técnico si es una Recepción
+            // 2. Generamos el ticket del técnico si es una Recepción
             if (esRecepcion) {
                 boolean esCelular = tipoEquipo != null && (
                     tipoEquipo.toLowerCase().contains("celular") || 
@@ -50,11 +63,13 @@ public class GeneradorPDF {
                     tipoEquipo.toLowerCase().contains("smartphone") || 
                     tipoEquipo.toLowerCase().contains("movil")
                 );
-                generarArchivoTecnico(rutaTecnico, idOrden, cliente, equipo, problema, esCelular, nombreTecnico);
+                generarArchivoTecnico(rutaTecnico, idOrden, cliente, equipoLimpio, problema, esCelular, nombreTecnico, claveExtraida);
             }
 
+            // --- IMPRESIÓN Y APERTURA ---
             File archivoCliente = new File(rutaCliente);
             File archivoTecnico = new File(rutaTecnico);
+            boolean impresoCorrectamente = false;
 
             javax.print.PrintService impresoraDefault = javax.print.PrintServiceLookup.lookupDefaultPrintService();
 
@@ -62,19 +77,19 @@ public class GeneradorPDF {
                 try {
                     if (archivoCliente.exists()) Desktop.getDesktop().print(archivoCliente);
                     if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().print(archivoTecnico);
+                    impresoCorrectamente = true;
                 } catch (Exception ex) {
                     javax.swing.JOptionPane.showMessageDialog(null, 
                         "La impresora está lista, pero falta asociar un lector PDF en Windows.\nAbriendo documentos en pantalla...", 
                         "Aviso de Sistema", javax.swing.JOptionPane.WARNING_MESSAGE);
-                        
-                    if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
-                    if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
                 }
             } else {
                 javax.swing.JOptionPane.showMessageDialog(null, 
                     "No se detectó ninguna impresora conectada.\nGenerando tickets en pantalla...", 
                     "Modo Visual", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                    
+            }
+
+            if (abrirAlFinal || !impresoCorrectamente) {
                 if (archivoCliente.exists()) Desktop.getDesktop().open(archivoCliente);
                 if (esRecepcion && archivoTecnico.exists()) Desktop.getDesktop().open(archivoTecnico);
             }
@@ -87,9 +102,10 @@ public class GeneradorPDF {
         }
     }
 
-    private void generarArchivoCliente(String ruta, String idOrden, String cliente, String equipo, String problema, 
+    private void generarArchivoCliente(String ruta, String idOrden, String fecha, String cliente, String equipoLimpio, String problema, 
                                        String total, String nombreEmpresa, String direccionEmpresa, String telefonoEmpresa, 
-                                       String politicaGarantia, String nombreTecnico, boolean esRecepcion, String trabajo) throws Exception {
+                                       String politicaGarantia, String nombreTecnico, boolean esRecepcion, String trabajo, 
+                                       String claveExtraida, String tipoEquipo) throws Exception {
         
         Document documento = new Document(new Rectangle(226, 800), 12, 12, 15, 15);
         PdfWriter.getInstance(documento, new FileOutputStream(ruta));
@@ -120,14 +136,27 @@ public class GeneradorPDF {
         tablaInfo.addCell(crearCeldaInvalida("TICKET #:", fuenteEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida(idOrden, fuenteTitulo));
 
+        // --- CORRECCIÓN DE FECHA ---
+        // Ahora respeta estrictamente la fecha que le mandas por parámetro.
         tablaInfo.addCell(crearCeldaInvalida("FECHA:", fuenteEtiqueta));
-        tablaInfo.addCell(crearCeldaInvalida(new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fuenteDato));
+        String fechaMostrar = (fecha == null || fecha.isEmpty()) ? "No registrada" : fecha;
+        tablaInfo.addCell(crearCeldaInvalida(fechaMostrar, fuenteDato));
 
         tablaInfo.addCell(crearCeldaInvalida("CLIENTE:", fuenteEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida(cliente.toUpperCase(), fuenteDato));
 
         tablaInfo.addCell(crearCeldaInvalida("EQUIPO:", fuenteEtiqueta));
-        tablaInfo.addCell(crearCeldaInvalida(equipo, fuenteDato));
+        tablaInfo.addCell(crearCeldaInvalida(equipoLimpio + (tipoEquipo != null ? " (" + tipoEquipo + ")" : ""), fuenteDato));
+
+        if (esRecepcion) {
+            tablaInfo.addCell(crearCeldaInvalida("SEGURIDAD:", fuenteEtiqueta));
+            // Agregamos .trim() por seguridad y cambiamos a la letra "O" mayúscula
+            if (claveExtraida.trim().equalsIgnoreCase("patron") || claveExtraida.trim().equalsIgnoreCase("p")) {
+                tablaInfo.addCell(crearCeldaInvalida("DIBUJAR PATRÓN:\n  O   O   O\n  O   O   O\n  O   O   O", fuenteDato));
+            } else {
+                tablaInfo.addCell(crearCeldaInvalida(claveExtraida, fuenteDato));
+            }
+        }
 
         tablaInfo.addCell(crearCeldaInvalida(esRecepcion ? "ATENDIDO POR:" : "ENTREGADO POR:", fuenteEtiqueta));
         tablaInfo.addCell(crearCeldaInvalida(nombreTecnico.toUpperCase(), fuenteDato));
@@ -143,16 +172,23 @@ public class GeneradorPDF {
         celdaTituloFalla.setBorder(Rectangle.NO_BORDER);
         tablaProblema.addCell(celdaTituloFalla);
         
-        PdfPCell celdaFalla = new PdfPCell(new Phrase(esRecepcion ? problema : trabajo, fuenteDato));
+        // --- NUEVO: Validamos el texto para que la celda NUNCA colapse ---
+        String textoMostrar = esRecepcion ? problema : trabajo;
+        if (textoMostrar == null || textoMostrar.trim().isEmpty()) {
+            textoMostrar = "Revisión técnica general."; // Texto por defecto si llega vacío
+        }
+
+        PdfPCell celdaFalla = new PdfPCell(new Phrase(textoMostrar, fuenteDato));
         celdaFalla.setPadding(8f);
-        celdaFalla.setBackgroundColor(new BaseColor(245, 245, 245));
-        celdaFalla.setBorderColor(BaseColor.LIGHT_GRAY);
+        celdaFalla.setBorderWidth(1f); // 1. Fuerza a dibujar un cuadro negro nítido
+        celdaFalla.setBorderColor(BaseColor.BLACK);
+        celdaFalla.setMinimumHeight(35f); // 2. Fuerza una altura mínima para que parezca un cajón de texto real
+        
         tablaProblema.addCell(celdaFalla);
         
         documento.add(tablaProblema);
 
         if (!esRecepcion) {
-            // DISEÑO DEL TICKET DE ENTREGA CON LA PÓLIZA DE GARANTÍA
             Paragraph cobro = new Paragraph("TOTAL PAGADO: L. " + total, fuenteTitulo);
             cobro.setAlignment(Element.ALIGN_RIGHT);
             cobro.setSpacingBefore(10f);
@@ -164,8 +200,7 @@ public class GeneradorPDF {
             tablaGarantia.setSpacingBefore(10f);
             
             PdfPCell celdaGar = new PdfPCell();
-            celdaGar.setBorderColor(BaseColor.GRAY);
-            celdaGar.setBackgroundColor(new BaseColor(250, 250, 250));
+            celdaGar.setBorderColor(BaseColor.BLACK); // Borde negro nítido
             celdaGar.setPadding(8f);
 
             Paragraph tituloGar = new Paragraph("PÓLIZA DE GARANTÍA\n\n", fuenteEtiqueta);
@@ -191,14 +226,12 @@ public class GeneradorPDF {
             documento.add(tablaGarantia);
             
         } else {
-            // DISEÑO DEL TICKET DE RECEPCIÓN
             PdfPTable tablaCondiciones = new PdfPTable(1);
             tablaCondiciones.setWidthPercentage(100);
             tablaCondiciones.setSpacingBefore(15f);
             
             PdfPCell celdaCond = new PdfPCell();
-            celdaCond.setBorderColor(BaseColor.GRAY);
-            celdaCond.setBackgroundColor(new BaseColor(250, 250, 250));
+            celdaCond.setBorderColor(BaseColor.BLACK); // Borde negro nítido
             celdaCond.setPadding(8f);
 
             Paragraph tituloCond = new Paragraph("TÉRMINOS Y CONDICIONES DEL SERVICIO\n\n", fuenteEtiqueta);
@@ -235,10 +268,10 @@ public class GeneradorPDF {
         documento.close();
     }
 
-    private void generarArchivoTecnico(String ruta, String idOrden, String cliente, String equipo, 
-                                       String problema, boolean esCelular, String nombreTecnico) throws Exception {
+    private void generarArchivoTecnico(String ruta, String idOrden, String cliente, String equipoLimpio, 
+                                       String problema, boolean esCelular, String nombreTecnico, String claveExtraida) throws Exception {
         
-        float alto = esCelular ? 145f : 550f; 
+        float alto = esCelular ? 160f : 550f;
         Document documento = new Document(new Rectangle(226, alto), 5, 5, 3, 3); 
         PdfWriter writer = PdfWriter.getInstance(documento, new FileOutputStream(ruta));
         documento.open();
@@ -251,10 +284,17 @@ public class GeneradorPDF {
         tablaInfo.setWidths(new float[]{50f, 50f}); 
 
         tablaInfo.addCell(crearCeldaInvalida("ORDEN: " + idOrden, fuenteMiniEtiqueta));
-        tablaInfo.addCell(crearCeldaInvalida("EQ: " + equipo, fuenteMiniDato));
+        tablaInfo.addCell(crearCeldaInvalida("EQ: " + equipoLimpio, fuenteMiniDato));
 
         tablaInfo.addCell(crearCeldaInvalida("CLI: " + (cliente.length() > 12 ? cliente.substring(0, 12) : cliente), fuenteMiniDato));
         tablaInfo.addCell(crearCeldaInvalida("TEC: " + nombreTecnico, fuenteMiniDato));
+
+        tablaInfo.addCell(crearCeldaInvalida("SEGURIDAD: ", fuenteMiniEtiqueta));
+        if (claveExtraida.trim().equalsIgnoreCase("patron") || claveExtraida.trim().equalsIgnoreCase("p")) {
+            tablaInfo.addCell(crearCeldaInvalida("O  O  O\nO  O  O\nO  O  O", fuenteMiniDato));
+        } else {
+            tablaInfo.addCell(crearCeldaInvalida(claveExtraida, fuenteMiniDato));
+        }
 
         documento.add(tablaInfo);
         
@@ -293,5 +333,24 @@ public class GeneradorPDF {
         celda.setBorder(Rectangle.NO_BORDER);
         celda.setPaddingBottom(4f);
         return celda;
+    }
+
+    public boolean reimprimirTicketExistente(String nroOrden, String cliente, int tipo) {
+        String subCarpeta = (tipo == 0 || tipo == 1) ? "Recepciones" : "Entregas";
+        String clienteLimpio = cliente.replace(" ", "_");
+        String nombreArchivo = "Ticket_" + nroOrden + "_" + clienteLimpio + "_CLIENTE.pdf";
+        
+        String rutaBase = System.getProperty("user.dir") + File.separator + "Tickets_Sairtech";
+        File archivo = new File(rutaBase + File.separator + subCarpeta + File.separator + nombreArchivo);
+
+        if (archivo.exists()) {
+            try {
+                Desktop.getDesktop().open(archivo);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 }

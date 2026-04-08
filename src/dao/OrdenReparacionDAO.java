@@ -18,16 +18,17 @@ public class OrdenReparacionDAO {
     }
 
     public int insertarConId(OrdenReparacion orden) {
-        String sql = "INSERT INTO Ordenes_Reparacion (id_equipo, problema_reportado, trabajo_realizado, costo, estado) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Ordenes_Reparacion (id_equipo, problema_reportado, trabajo_realizado, costo, estado, seguridad_dispositivo) VALUES (?, ?, ?, ?, ?, ?)";
+    
+    try (Connection conexion = factory.getConexion();
+         PreparedStatement comando = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
         
-        try (Connection conexion = factory.getConexion();
-             PreparedStatement comando = conexion.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
-            comando.setInt(1, orden.getIdEquipo());
-            comando.setString(2, orden.getProblemaReportado());
-            comando.setString(3, orden.getTrabajoRealizado());
-            comando.setDouble(4, orden.getCosto());
-            comando.setString(5, orden.getEstado());
+        comando.setInt(1, orden.getIdEquipo());
+        comando.setString(2, orden.getProblemaReportado());
+        comando.setString(3, orden.getTrabajoRealizado());
+        comando.setDouble(4, orden.getCosto());
+        comando.setString(5, orden.getEstado());
+        comando.setString(6, orden.getSeguridadDispositivo()); // <--- NUEVO
             
             int filasAfectadas = comando.executeUpdate();
             
@@ -177,8 +178,9 @@ public class OrdenReparacionDAO {
     }
     
     public String[] obtenerTextosOrden(int idOrden) {
-        String[] textos = new String[2];
-        String sql = "SELECT problema_reportado, trabajo_realizado FROM Ordenes_Reparacion WHERE id_orden = ?";
+        String[] textos = new String[3]; // <--- Ahora guarda 3 cosas
+        // Asegúrate de que la columna se llama seguridad_dispositivo en tu BD
+        String sql = "SELECT problema_reportado, trabajo_realizado, seguridad_dispositivo FROM Ordenes_Reparacion WHERE id_orden = ?";
         
         try (Connection conexion = factory.getConexion();
              PreparedStatement comando = conexion.prepareStatement(sql)) {
@@ -188,6 +190,7 @@ public class OrdenReparacionDAO {
                 if (rs.next()) {
                     textos[0] = rs.getString("problema_reportado");
                     textos[1] = rs.getString("trabajo_realizado");
+                    textos[2] = rs.getString("seguridad_dispositivo"); // <--- Extraemos la clave
                 }
             }
         } catch (SQLException e) {
@@ -308,4 +311,44 @@ public class OrdenReparacionDAO {
         
         return nombreTecnico;
     }
+
+   // --- VERSIÓN BLINDADA PARA OBTENER LA FECHA REAL ---
+    public String obtenerFechaOrden(int idOrden) {
+        String fecha = "";
+        String sql = "SELECT fecha_ingreso FROM Ordenes_Reparacion WHERE id_orden = ?"; 
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            comando.setInt(1, idOrden);
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    try {
+                        // Intento 1: Formato Fecha/Hora nativo de SQL
+                        java.sql.Timestamp ts = rs.getTimestamp("fecha_ingreso");
+                        if (ts != null) {
+                            fecha = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ts);
+                        }
+                    } catch (Exception e) {
+                        // Intento 2: Por si la columna en tu BD la creaste como texto (VARCHAR)
+                        fecha = rs.getString("fecha_ingreso");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // Si la consulta SQL falla por nombre incorrecto, nos lo gritará aquí:
+            javax.swing.JOptionPane.showMessageDialog(null, "Error SQL al sacar fecha: " + e.getMessage());
+        }
+        
+        // EL CHIVATO: Si después de todo esto la fecha sigue vacía, te avisará en pantalla
+        if (fecha == null || fecha.trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(null, 
+                "¡ALERTA!\nLa base de datos se conectó, pero 'fecha_ingreso' vino vacía para la orden #" + idOrden, 
+                "Fallo en Base de Datos", javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+        
+        return fecha;
+    }
+    
+    
 }

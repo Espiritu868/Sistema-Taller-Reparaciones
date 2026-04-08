@@ -12,6 +12,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         aplicarDisenoPrincipal();
+        this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
         
         // Apagamos todos los botones del menú lateral
         btnClientes.setEnabled(false);
@@ -26,6 +27,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         // Cargamos el PanelLogin por defecto en el centro
         PanelLogin login = new PanelLogin();
         mostrarPanel(login);
+        dao.UsuarioDAO daoUsuario = new dao.UsuarioDAO();
+        daoUsuario.inicializarAdministradorDefecto();
     }
     
     public void habilitarSistema(String rol, String nombreUsuario) { 

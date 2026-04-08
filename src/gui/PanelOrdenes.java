@@ -1,5 +1,13 @@
 package gui;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Dimension;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
 public class PanelOrdenes extends javax.swing.JPanel {
     
     
@@ -160,31 +168,50 @@ public class PanelOrdenes extends javax.swing.JPanel {
 
         add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 60, 810, 490));
     }// </editor-fold>//GEN-END:initComponents
-
+    
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
+       // 1. Validar que se haya seleccionado un equipo
         if (idEquipoSeleccionado == -1) {
             javax.swing.JOptionPane.showMessageDialog(this, "Debe seleccionar un equipo de la lista.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        // 2. Capturar datos de los campos
         String problema = txtProblema.getText().trim();
-        String trabajo = txtTrabajo.getText().trim();
+        String trabajoReal = txtTrabajo.getText().trim();
+        // Evitamos guardar el texto fantasma en la BD
+        if (trabajoReal.equals("Escriba la reparación que se realizó...")) {
+            trabajoReal = "";
+        }
+        
         String estado = cmbEstado.getSelectedItem().toString();
         String cliente = txtNombre.getText(); 
         String equipo = txtEquipo.getText();  
         
-        if (problema.isEmpty() || problema.equals("Escribe aquí el problema de tu equipo.")) {
+        // Capturar seguridad basada en los botones
+        String seguridad = "Sin Clave";
+        if (rbtnPatron.isSelected()) {
+            seguridad = "Patrón";
+        } else {
+            seguridad = txtSeguridad.getText().trim().isEmpty() ? "Sin Clave" : txtSeguridad.getText().trim();
+        }
+        
+        // 3. Validar que el problema no esté vacío ni tenga el texto fantasma
+        if (problema.isEmpty() || problema.equals("Describa aquí la falla del equipo...")) {
             javax.swing.JOptionPane.showMessageDialog(this, "Por favor, describa el problema del equipo.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // 4. CREAR EL OBJETO E INYECTAR DATOS
         modelo.OrdenReparacion nuevaOrden = new modelo.OrdenReparacion();
         nuevaOrden.setIdEquipo(idEquipoSeleccionado);
         nuevaOrden.setProblemaReportado(problema);
-        nuevaOrden.setTrabajoRealizado(trabajo);
+        nuevaOrden.setTrabajoRealizado(trabajoReal);
         nuevaOrden.setEstado(estado);
         nuevaOrden.setCosto(0.0);
+        nuevaOrden.setSeguridadDispositivo(seguridad); 
 
+        // 5. Guardar en Base de Datos
         dao.OrdenReparacionDAO daoOrden = new dao.OrdenReparacionDAO();
         int idGenerado = daoOrden.insertarConId(nuevaOrden);
         
@@ -195,25 +222,28 @@ public class PanelOrdenes extends javax.swing.JPanel {
                 utilidades.GeneradorPDF gen = new utilidades.GeneradorPDF();
                 String nroOrdenStr = String.valueOf(idGenerado);
                 
-                // Generar el ticket
+                // Preparar datos para el Ticket
                 String tipoAImprimir = (tipoEquipoSeleccionado != null && !tipoEquipoSeleccionado.isEmpty()) ? tipoEquipoSeleccionado : "Generico";
+                String equipoConClave = equipo + "  |  Clave: " + seguridad;
 
-// Generar el ticket (nota que agregamos 'tipoAImprimir' al final)
-            boolean ok = gen.crearTicket(
-            nroOrdenStr, 
-            cliente, 
-            equipo, 
-            problema, 
-            "0.00", 
-            "SAIRTECH", 
-            "Santa Barbara, Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", 
-            "8951-8040", 
-            "Garantía de 30 días en mano de obra.", 
-            tecnicoActivo, 
-            trabajo, 
-            true, 
-            tipoAImprimir
-            );  
+                // Generar el ticket PDF
+                boolean ok = gen.crearTicket(
+                    nroOrdenStr, 
+                    "", 
+                    cliente, 
+                    equipoConClave, 
+                    problema, 
+                    "0.00", 
+                    "SAIRTECH", 
+                    "Santa Barbara, Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", 
+                    "8951-8040", 
+                    "Garantía de 30 días en mano de obra.", 
+                    tecnicoActivo, 
+                    trabajoReal, 
+                    true, 
+                    tipoAImprimir,
+                    true
+                );
 
                 if (ok) {
                     javax.swing.JOptionPane.showMessageDialog(this, "¡Orden #" + nroOrdenStr + " Guardada exitosamente!", "Éxito", javax.swing.JOptionPane.INFORMATION_MESSAGE);
@@ -222,19 +252,29 @@ public class PanelOrdenes extends javax.swing.JPanel {
                 System.err.println("Error al procesar ticket: " + ex.getMessage());
             }
 
-            // Limpieza manual de campos
+            // 6. Limpieza de campos y retorno de textos fantasma
             txtBuscarEquipo.setText("");
             txtNombre.setText("");
             txtEquipo.setText("");
-            txtProblema.setText("Escribe aquí el problema de tu equipo.");
-            txtTrabajo.setText("Escribe aquí la reparación realizada.");
+            
+            // Limpieza de Seguridad
+            txtSeguridad.setText("");
+            rbtnPin.setSelected(true);
+            ((java.awt.CardLayout) panelSeguridadContainer.getLayout()).show(panelSeguridadContainer, "PIN");
+            
+            // Retorno de textos fantasma
+            txtProblema.setText("Describa aquí la falla del equipo...");
+            txtProblema.setForeground(Color.GRAY);
+            txtTrabajo.setText("Escriba la reparación que se realizó...");
+            txtTrabajo.setForeground(Color.GRAY);
+            
             cmbEstado.setSelectedIndex(0);
             idEquipoSeleccionado = -1;
             tipoEquipoSeleccionado = "";
             cargarTablaBuscador("");
             
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "No se pudo crear la orden.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "No se pudo crear la orden en la base de datos.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -266,29 +306,19 @@ public class PanelOrdenes extends javax.swing.JPanel {
     }//GEN-LAST:event_tablaBusquedaEquipoMouseClicked
 
     private void txtProblemaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtProblemaMouseClicked
-        if (txtProblema.getText().equals("Escribe aquí el problema de tu equipo.")) {
-            txtProblema.setText("");
-        }
+
     }//GEN-LAST:event_txtProblemaMouseClicked
 
     private void txtTrabajoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTrabajoMouseClicked
-        // .trim() elimina espacios accidentales al inicio o final
-        if(txtTrabajo.getText().trim().equals("Escribe aquí la reparación realizada.")) {
-            txtTrabajo.setText("");
-        }
+      
     }//GEN-LAST:event_txtTrabajoMouseClicked
 
     private void txtTrabajoFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTrabajoFocusLost
-        if (txtTrabajo.getText().trim().isEmpty()) {
-            txtTrabajo.setText("Escribe aquí la reparación realizada.");
-        }
+
     }//GEN-LAST:event_txtTrabajoFocusLost
 
     private void txtProblemaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtProblemaFocusLost
-        // Si al salir, el cuadro está vacío, le devolvemos su mensaje guía
-        if (txtProblema.getText().trim().isEmpty()) {
-            txtProblema.setText("Escribe aquí el problema de tu equipo.");
-        }
+
     }//GEN-LAST:event_txtProblemaFocusLost
 
     private void cmbEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEstadoActionPerformed
@@ -302,7 +332,6 @@ public class PanelOrdenes extends javax.swing.JPanel {
     private void txtNombreKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNombreKeyReleased
 
     }//GEN-LAST:event_txtNombreKeyReleased
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnGuardar;
@@ -323,11 +352,25 @@ public class PanelOrdenes extends javax.swing.JPanel {
     private javax.swing.JTextArea txtProblema;
     private javax.swing.JTextArea txtTrabajo;
     // End of variables declaration//GEN-END:variables
-
+    private javax.swing.JTextField txtSeguridad; 
+    private javax.swing.JRadioButton rbtnPin;
+    private javax.swing.JRadioButton rbtnPatron;
+    private javax.swing.JPanel panelSeguridadContainer;
+    private javax.swing.JLabel lblPatronVisual;
+    
     private void cargarTablaBuscador(String texto) {
         dao.EquipoRegistradoDAO daoEquipo = new dao.EquipoRegistradoDAO();
         
         java.util.List<Object[]> lista = daoEquipo.buscarEquipoCompleto(texto);
+        
+        // --- NUEVO: Le damos la vuelta a la lista para mostrar primero los últimos ---
+        // --- NUEVO: Ordenamiento estricto por ID de Mayor a Menor ---
+        lista.sort((Object[] a, Object[] b) -> {
+            Integer idA = Integer.parseInt(a[0].toString());
+            Integer idB = Integer.parseInt(b[0].toString());
+            return idB.compareTo(idA); 
+        });
+        
         javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
             new Object[]{"ID", "Modelo", "Dueño", "Tipo"}, 0
         ) {
@@ -358,7 +401,7 @@ public class PanelOrdenes extends javax.swing.JPanel {
         }
     }
     
-    private void aplicarDisenoOrdenes() {
+   private void aplicarDisenoOrdenes() {
         // Limpieza
         this.removeAll();
         this.setLayout(new java.awt.BorderLayout(20, 20));
@@ -429,22 +472,61 @@ public class PanelOrdenes extends javax.swing.JPanel {
         txtEquipo.setPreferredSize(new java.awt.Dimension(0, 30));
         gbc.gridy++; panelDerecho.add(txtEquipo, gbc);
 
-        // Text Areas grandes para Problema y Trabajo
+        // --- CONFIGURACIÓN DE TEXTO FANTASMA (FOCUS LISTENER) ---
+        
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Problema Reportado:"), gbc);
         gbc.weighty = 0.3;  
         panelProblema.setPreferredSize(new java.awt.Dimension(0, 80));
-        txtProblema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        
+        // 1. Para el Problema Reportado
+        txtProblema.setText("Describa aquí la falla del equipo...");
+        txtProblema.setForeground(Color.GRAY); // Letra gris de inicio
+        txtProblema.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtProblema.setLineWrap(true);
         txtProblema.setWrapStyleWord(true);
+        
+        txtProblema.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtProblema.getText().equals("Describa aquí la falla del equipo...")) {
+                    txtProblema.setText(""); // Borra el fantasma
+                    txtProblema.setForeground(Color.BLACK); // Letra normal para escribir
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtProblema.getText().trim().isEmpty()) {
+                    txtProblema.setText("Describa aquí la falla del equipo..."); // Vuelve el fantasma
+                    txtProblema.setForeground(Color.GRAY);
+                }
+            }
+        });
         gbc.gridy++; panelDerecho.add(panelProblema, gbc);
 
         gbc.weighty = 0.0; 
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Trabajo a Realizar / Realizado:"), gbc);
         gbc.weighty = 0.3;
         panelTrabajo.setPreferredSize(new java.awt.Dimension(0, 80));
-        txtTrabajo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        
+        // 2. Para el Trabajo Realizado
+        txtTrabajo.setText("Escriba la reparación que se realizó...");
+        txtTrabajo.setForeground(Color.GRAY); // Letra gris de inicio
+        txtTrabajo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtTrabajo.setLineWrap(true);
         txtTrabajo.setWrapStyleWord(true);
+        
+        txtTrabajo.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtTrabajo.getText().equals("Escriba la reparación que se realizó...")) {
+                    txtTrabajo.setText("");
+                    txtTrabajo.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtTrabajo.getText().trim().isEmpty()) {
+                    txtTrabajo.setText("Escriba la reparación que se realizó...");
+                    txtTrabajo.setForeground(Color.GRAY);
+                }
+            }
+        });
         gbc.gridy++; panelDerecho.add(panelTrabajo, gbc);
 
         // Estado inicial
@@ -452,6 +534,61 @@ public class PanelOrdenes extends javax.swing.JPanel {
         gbc.gridy++; panelDerecho.add(new javax.swing.JLabel("Estado Inicial:"), gbc);
         cmbEstado.setPreferredSize(new java.awt.Dimension(0, 35));
         gbc.gridy++; panelDerecho.add(cmbEstado, gbc);
+        
+        // --- NUEVA SECCIÓN DE SEGURIDAD DINÁMICA ---
+        JLabel lblSeguridad = new JLabel("Seguridad del Dispositivo:");
+        lblSeguridad.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblSeguridad.setForeground(Color.GRAY);
+
+        // 1. Creamos los botones de opción
+        rbtnPin = new javax.swing.JRadioButton("PIN / Texto", true); // True para que inicie seleccionado
+        rbtnPatron = new javax.swing.JRadioButton("Patrón visual");
+        rbtnPin.setBackground(Color.WHITE);
+        rbtnPatron.setBackground(Color.WHITE);
+
+        // 2. Los agrupamos para que actúen como un switch
+        javax.swing.ButtonGroup grupoSeguridad = new javax.swing.ButtonGroup();
+        grupoSeguridad.add(rbtnPin);
+        grupoSeguridad.add(rbtnPatron);
+
+        // 3. Panel horizontal
+        JPanel panelRadios = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        panelRadios.setBackground(Color.WHITE);
+        panelRadios.add(rbtnPin);
+        panelRadios.add(new JLabel("   "));
+        panelRadios.add(rbtnPatron);
+
+        // 4. Contenedor CardLayout
+        panelSeguridadContainer = new JPanel(new java.awt.CardLayout());
+        panelSeguridadContainer.setBackground(Color.WHITE);
+
+        // CARTA 1: PIN
+        txtSeguridad = new JTextField();
+        txtSeguridad.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtSeguridad.setPreferredSize(new Dimension(0, 30));
+
+        // CARTA 2: Patrón
+        lblPatronVisual = new JLabel("<html><div style='text-align: center; letter-spacing: 12px; line-height: 0.8; font-size: 14px; color: #bdc3c7;'>O &nbsp; O &nbsp; O<br>O &nbsp; O &nbsp; O<br>O &nbsp; O &nbsp; O</div></html>");
+        lblPatronVisual.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblPatronVisual.setBorder(javax.swing.BorderFactory.createLineBorder(new Color(230, 230, 230)));
+        lblPatronVisual.setPreferredSize(new Dimension(0, 85)); 
+
+        panelSeguridadContainer.add(txtSeguridad, "PIN");
+        panelSeguridadContainer.add(lblPatronVisual, "PATRON");
+
+        // 5. Lógica de los botones
+        rbtnPin.addActionListener(e -> {
+            ((java.awt.CardLayout) panelSeguridadContainer.getLayout()).show(panelSeguridadContainer, "PIN");
+        });
+        rbtnPatron.addActionListener(e -> {
+            ((java.awt.CardLayout) panelSeguridadContainer.getLayout()).show(panelSeguridadContainer, "PATRON");
+        });
+
+        // 6. Agregamos al panel principal derecho
+        gbc.gridy++; panelDerecho.add(lblSeguridad, gbc);
+        gbc.gridy++; panelDerecho.add(panelRadios, gbc);
+        gbc.gridy++; gbc.insets = new java.awt.Insets(5, 0, 0, 0); 
+        panelDerecho.add(panelSeguridadContainer, gbc);
 
         // Botón Guardar
         gbc.gridy++; gbc.insets = new java.awt.Insets(25, 0, 0, 0);

@@ -6,12 +6,12 @@ import java.awt.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import utilidades.GeneradorPDF;
 
 public class PanelListadoOrdenes extends javax.swing.JPanel {
 
     
     private OrdenReparacionDAO daoOrden = new OrdenReparacionDAO();
+    private String firmaCambioEstado = ""; // <--- NUEVA VARIABLE PARA GUARDAR QUIEN FIRMA
 
     public PanelListadoOrdenes() {
         initComponents();
@@ -155,14 +155,25 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         estilizarBoton(btnEntregar, new Color(46, 204, 113));
         estilizarBoton(btnEliminar, new Color(231, 76, 60));
 
+        // 1. Instanciamos, estilizamos y escuchamos el nuevo botón de Reimprimir
+        JButton btnReimprimir = new JButton("Reimprimir [T]");
+        estilizarBoton(btnReimprimir, new Color(243, 156, 18)); // Color Naranja/Amarillo
+        btnReimprimir.addActionListener(evt -> btnReimprimirActionPerformed(evt));
+
         gbc.insets = new Insets(20, 0, 0, 0);
         gbc.gridy = 10; panelGestion.add(btnActualizarOrden, gbc);
+        
         gbc.insets = new Insets(8, 0, 0, 0);
         gbc.gridy = 11; panelGestion.add(btnEditarDetalles, gbc);
+        
         gbc.gridy = 12; panelGestion.add(btnEntregar, gbc);
         
+        // 2. Agregamos el botón de Reimprimir debajo de Entregar
+        gbc.gridy = 13; panelGestion.add(btnReimprimir, gbc);
+        
         gbc.insets = new Insets(30, 0, 0, 0);
-        gbc.gridy = 13; panelGestion.add(btnEliminar, gbc);
+        // 3. Movemos el botón Eliminar a la posición 14
+        gbc.gridy = 14; panelGestion.add(btnEliminar, gbc);
 
         // ENSAMBLADO
         this.add(panelNorte, BorderLayout.NORTH);
@@ -325,6 +336,7 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     }//GEN-LAST:event_cmbFiltroEstadoItemStateChanged
 
     private void btnEntregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntregarActionPerformed
+                                           
         int fila = tablaGeneral.getSelectedRow();
         if (fila == -1) {
             JOptionPane.showMessageDialog(this, "Por favor, seleccione una orden.", "Aviso", JOptionPane.WARNING_MESSAGE);
@@ -341,57 +353,163 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
         }
 
         if (JOptionPane.showConfirmDialog(this, "¿Confirmar entrega y cobro de L. " + costoTotal + "?", "SairTech", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            
+            // --- NUEVO: Pide firma para poder entregar ---
+            String tecnicoFirma = solicitarFirmaUsuario();
+            if (tecnicoFirma == null) return; // Si cancela o falla, no se entrega nada
+            
             try {
-                gui.VentanaPrincipal v = (gui.VentanaPrincipal) SwingUtilities.getWindowAncestor(this);
-                if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden), v.getIdUsuarioActivo())) {
+                // Buscamos el ID del usuario que está firmando para registrarlo en la BD
+                dao.UsuarioDAO daoUser = new dao.UsuarioDAO();
+                int idTecnico = daoUser.obtenerIdPorNombre(tecnicoFirma);
 
-                    // Generar PDF
-                    GeneradorPDF generador = new GeneradorPDF();
+                if (daoOrden.marcarComoEntregado(Integer.parseInt(idOrden), idTecnico)) {
+                    
+                    // Al registrar el entregado, también dejamos la huella en el historial de trabajo
+                    String fecha = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date());
+                    String nota = "\n\n[" + fecha + " - EQUIPO ENTREGADO Y COBRADO POR: " + tecnicoFirma.toUpperCase() + "]";
+                    String[] textos = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
+                    daoOrden.actualizarTextosOrden(Integer.parseInt(idOrden), textos[0], textos[1] + nota);
+
+                   // Generar PDF
+                    utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
                     String[] detalles = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
-                    String trabajoRealizado = (detalles[1] != null && !detalles[1].isEmpty()) ? detalles[1] : "Revisión técnica general.";
+                    String trabajoRealizado = (detalles[1] != null && !detalles[1].isEmpty()) ? detalles[1] + nota : "Revisión técnica general.";
+                    
+                    // --- NUEVO: Extraemos la clave y la pegamos al equipo ---
+                    String claveBD = (detalles[2] != null) ? detalles[2] : "Sin Clave";
+                    String equipoConClave = tablaGeneral.getValueAt(fila, 2).toString().trim() + "  |  Clave: " + claveBD;
+                    // --------------------------------------------------------
 
                     int modelRow = tablaGeneral.convertRowIndexToModel(fila);
                     String tipoEquipo = tablaGeneral.getModel().getValueAt(modelRow, 6).toString();
-
+                    String fechaOriginal = daoOrden.obtenerFechaOrden(Integer.parseInt(idOrden));
+                    // Cuando llames a crearTicket, pásale 'fechaOriginal' en lugar de las comillas vacías
                     boolean ticketCreado = generador.crearTicket(
-                        idOrden,
-                        tablaGeneral.getValueAt(fila, 1).toString().trim(), // Cliente
-                        tablaGeneral.getValueAt(fila, 2).toString().trim(), // Equipo
-                        tablaGeneral.getValueAt(fila, 3).toString().trim(), // Problema
-                        costoTotal,
-                        "SAIRTECH - TECNOLOGIA", 
-                        "Santa Barbara, Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", // Nueva dirección
-                        "8951-8040", // Nuevo teléfono
-                        "OJO no aplica garantia en equipos mojados, pantallas no cuentan con garantía.", 
-                        v.getNombreUsuarioActivo(), 
-                        trabajoRealizado,
-                        false, 
-                        tipoEquipo
-                    );
+                        idOrden, fechaOriginal, 
+                        tablaGeneral.getValueAt(fila, 1).toString().trim(), 
+                        equipoConClave, // <--- ¡AQUÍ ESTÁ!
+                        tablaGeneral.getValueAt(fila, 3).toString().trim(), 
+                        costoTotal, "SAIRTECH - TECNOLOGIA", 
+                        "Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", 
+                        "8951-8040", "OJO no aplica garantia en equipos mojados, pantallas no cuentan con garantía.", 
+                        tecnicoFirma, trabajoRealizado, false, tipoEquipo, true);
 
-                    if (ticketCreado) {
-                        JOptionPane.showMessageDialog(this, "¡Entrega exitosa! Factura generada.");
-                        refrescarTabla();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Error: No se pudo crear el ticket.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                    JOptionPane.showMessageDialog(this, "¡Entrega exitosa! Ticket generado.");
+                    refrescarTabla();
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error critico al entregar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error crítico al entregar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_btnEntregarActionPerformed
     
-    private void btnDesbloquearActionPerformed(java.awt.event.ActionEvent evt) {                                                     
+    private void btnReimprimirActionPerformed(java.awt.event.ActionEvent evt) {
+        int fila = tablaGeneral.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, seleccione una orden de la tabla.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Extraemos los datos necesarios de la tabla
+        String idOrden = tablaGeneral.getValueAt(fila, 0).toString().trim();
+        String cliente = tablaGeneral.getValueAt(fila, 1).toString().trim();
+        String estadoActual = tablaGeneral.getValueAt(fila, 4).toString().trim();
+
+        // Armamos el menú dependiendo del estado
+        Object[] opciones;
+        if (estadoActual.equals("Entregado")) {
+            opciones = new Object[]{"Ticket Recepción", "Ticket Técnico", "Ticket Entrega", "Cancelar"};
+        } else {
+            opciones = new Object[]{"Ticket Recepción", "Ticket Técnico", "Cancelar"};
+        }
+
+        int seleccion = JOptionPane.showOptionDialog(
+            this,
+            "¿Qué ticket desea reimprimir para " + cliente + " (Orden #" + idOrden + ")?",
+            "Reimpresión - SairTech",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null, 
+            opciones, 
+            opciones[0]
+        );
+
+        // Si el usuario presiona "Cancelar" o cierra la ventana, la selección es igual al último elemento o -1
+        if (seleccion >= 0 && seleccion < opciones.length - 1) {
+            utilidades.GeneradorPDF generador = new utilidades.GeneradorPDF();
+            
+            // 1. Intentamos la forma rápida (buscar el PDF que ya existe)
+            boolean exito = generador.reimprimirTicketExistente(idOrden, cliente, seleccion);
+            
+            // 2. EL PLAN B: Si no existe, lo regeneramos de cero
+            if (!exito) {
+                int respuesta = JOptionPane.showConfirmDialog(this,
+                    "El archivo físico ya no existe (quizás es antiguo o fue eliminado).\n¿Desea regenerarlo con los datos actuales del sistema?",
+                    "Regenerar Ticket", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    
+                if (respuesta == JOptionPane.YES_OPTION) {
+                    try {
+                        String equipo = tablaGeneral.getValueAt(fila, 2).toString().trim();
+                        String problema = tablaGeneral.getValueAt(fila, 3).toString().trim();
+                        String costoTotal = tablaGeneral.getValueAt(fila, 5).toString().trim();
+                        int modelRow = tablaGeneral.convertRowIndexToModel(fila);
+                        String tipoEquipo = tablaGeneral.getModel().getValueAt(modelRow, 6).toString();
+                        
+                       String[] detallesBD = daoOrden.obtenerTextosOrden(Integer.parseInt(idOrden));
+                        String trabajoRealizado = (detallesBD[1] != null && !detallesBD[1].isEmpty()) ? detallesBD[1] : "Revisión técnica general.";
+                        String problemaReal = (detallesBD[0] != null && !detallesBD[0].isEmpty()) ? detallesBD[0] : problema;
+                        
+                        // --- NUEVO: Extraemos la clave y la pegamos al equipo ---
+                        String claveBD = (detallesBD[2] != null) ? detallesBD[2] : "Sin Clave";
+                        String equipoConClave = equipo + "  |  Clave: " + claveBD;
+                        // --------------------------------------------------------
+                        
+                        boolean esRecepcion = (seleccion == 0 || seleccion == 1);
+                        
+                        gui.VentanaPrincipal v = (gui.VentanaPrincipal) SwingUtilities.getWindowAncestor(this);
+                        String tecnico = (v != null) ? v.getNombreUsuarioActivo() : "SairTech";
+
+                        String fechaOriginal = daoOrden.obtenerFechaOrden(Integer.parseInt(idOrden));
+                        // Llamamos al creador de tickets en MODO SILENCIOSO
+                       boolean regenerado = generador.crearTicket(
+                            idOrden, 
+                            fechaOriginal, 
+                            cliente, equipoConClave, problemaReal, costoTotal, // <--- Mandamos equipoConClave
+                            "SAIRTECH - TECNOLOGIA", 
+                            "Santa Barbara, Barrio La Soledad, Frente a Sastreria La Elegancia", 
+                            "8951-8040", 
+                            "OJO no aplica garantia en equipos mojados, pantallas no cuentan con garantía.", 
+                            tecnico, trabajoRealizado, esRecepcion, tipoEquipo, 
+                            false // <--- FALSE: Solo guarda el archivo en la carpeta, NO ABRE NADA AÚN
+                        );
+                        
+                        if (regenerado) {
+                            // 3. AHORA SÍ: Abrimos SOLAMENTE el ticket que el usuario seleccionó
+                            generador.reimprimirTicketExistente(idOrden, cliente, seleccion);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Error al intentar regenerar el ticket: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        }
+    }
+    
+    private void btnDesbloquearActionPerformed(java.awt.event.ActionEvent evt) {                                               
         if (txtIdOrden.getText().isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla primero.", "Aviso", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
         
-        // Llamamos al guardia de seguridad (tu validación en BD)
-        if (solicitarPermisoAdmin()) {
-            cmbNuevoEstado.setEnabled(true); // ¡Se abre el candado!
-            javax.swing.JOptionPane.showMessageDialog(this, "Estado desbloqueado. Elija el nuevo estado y presione 'Actualizar Orden'.", "Autorizado", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        String tecnico = solicitarFirmaUsuario();
+        
+        if (tecnico != null) {
+            cmbNuevoEstado.setEnabled(true); 
+            firmaCambioEstado = tecnico; // Guardamos el nombre en la memoria temporal
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Estado desbloqueado por: " + tecnico.toUpperCase() + ".\nElija el nuevo estado y presione 'Actualizar Orden'.", 
+                "Firma Aceptada", javax.swing.JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
@@ -448,6 +566,8 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
             if (valorEstado != null) cmbNuevoEstado.setSelectedItem(valorEstado.toString().trim());
             Object valorCosto = model.getValueAt(modelRow, 5);
             txtCostoFinal.setText(valorCosto != null ? valorCosto.toString() : "0.0");
+            cmbNuevoEstado.setEnabled(false);
+            firmaCambioEstado = "";
 
             try {
                 BorderLayout bl = (BorderLayout) this.getLayout();
@@ -481,8 +601,26 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
             double costo = Double.parseDouble(txtCostoFinal.getText().trim());
 
             if (daoOrden.actualizarEstadoYCosto(id, estado, costo)) {
+                
+                // MODO AUDITORÍA: Si alguien firmó para cambiar esto, dejamos la huella
+                if (!firmaCambioEstado.isEmpty()) {
+                    String[] textos = daoOrden.obtenerTextosOrden(id);
+                    String problema = textos[0] != null ? textos[0] : "";
+                    String trabajo = textos[1] != null ? textos[1] : "";
+                    
+                    // Creamos la etiqueta de texto con fecha y autor
+                    String fechaCambio = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date());
+                    String notaHistorial = "\n\n[" + fechaCambio + " - Estado cambiado a '" + estado.toUpperCase() + "' por: " + firmaCambioEstado.toUpperCase() + "]";
+                    
+                    // Inyectamos la nota en la base de datos
+                    daoOrden.actualizarTextosOrden(id, problema, trabajo + notaHistorial);
+                }
+                
                 JOptionPane.showMessageDialog(this, "¡Orden actualizada correctamente!");
+                
+                // Reseteamos todo por seguridad
                 cmbNuevoEstado.setEnabled(false);
+                firmaCambioEstado = ""; 
                 refrescarTabla();
             }
         } catch (NumberFormatException e) {
@@ -531,34 +669,27 @@ public class PanelListadoOrdenes extends javax.swing.JPanel {
     private javax.swing.JTextField txtIdOrden;
     // End of variables declaration//GEN-END:variables
     
-    private boolean solicitarPermisoAdmin() {
-        javax.swing.JTextField txtUser = new javax.swing.JTextField();
+    private String solicitarFirmaUsuario() {
         javax.swing.JPasswordField txtPass = new javax.swing.JPasswordField();
-        
-        Object[] mensaje = {
-            "Se requieren permisos de Administrador para cambiar el estado manualmente.",
-            "Usuario:", txtUser,
-            "Contraseña:", txtPass
-        };
+        Object[] mensaje = {"Ingrese su PIN / Contraseña para firmar:", txtPass};
 
-        int opcion = javax.swing.JOptionPane.showConfirmDialog(this, mensaje, "Autorización de SairTech", 
-                     javax.swing.JOptionPane.OK_CANCEL_OPTION, javax.swing.JOptionPane.WARNING_MESSAGE);
+        int opcion = JOptionPane.showConfirmDialog(this, mensaje, "Firma Rápida - SairTech", 
+                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                      
-        if (opcion == javax.swing.JOptionPane.OK_OPTION) {
-            String usuario = txtUser.getText();
+        if (opcion == JOptionPane.OK_OPTION) {
             String clave = new String(txtPass.getPassword());
-            
             dao.UsuarioDAO daoUsuario = new dao.UsuarioDAO();
-            String rol = daoUsuario.validarLogin(usuario, clave);
-            if (!rol.equals("ERROR") && (rol.equalsIgnoreCase("Administrador") || rol.equalsIgnoreCase("Admin"))) {
-                return true;
+            
+            // Buscamos quién es el dueño de esa contraseña
+            String tecnico = daoUsuario.obtenerUsuarioPorClave(clave);
+            
+            if (tecnico != null) {
+                return tecnico; 
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, 
-                    "Credenciales incorrectas o el usuario no tiene privilegios de Administrador.", 
-                    "Acceso Denegado", javax.swing.JOptionPane.ERROR_MESSAGE);
-                return false;
+                JOptionPane.showMessageDialog(this, "Contraseña incorrecta o no registrada.", "Acceso Denegado", JOptionPane.ERROR_MESSAGE);
+                return null;
             }
         }
-        return false;
+        return null;
     }
 }

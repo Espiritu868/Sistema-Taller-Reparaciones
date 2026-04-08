@@ -169,4 +169,70 @@ public class UsuarioDAO {
         }
         return 0; 
     }
+
+    // ==============================================================================
+    // NUEVOS MÉTODOS PARA LA AUDITORÍA Y FIRMA RÁPIDA (PIN)
+    // ==============================================================================
+
+    // 1. Busca el nombre del usuario usando SOLO su contraseña (encriptándola primero)
+    public String obtenerUsuarioPorClave(String passwordReal) {
+        String usuario = null;
+        String sql = "SELECT usuario FROM Usuarios WHERE password_hash = ?"; 
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            String passwordEncriptado = encriptarContraseña(passwordReal);
+            comando.setString(1, passwordEncriptado);
+            
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    usuario = rs.getString("usuario");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al buscar usuario por clave: " + e.getMessage());
+        }
+        return usuario;
+    }
+
+    // 2. Verifica si una contraseña ya existe (encriptándola primero para buscarla)
+    public boolean existeClave(String passwordReal) {
+        String sql = "SELECT COUNT(*) FROM Usuarios WHERE password_hash = ?";
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement comando = conexion.prepareStatement(sql)) {
+            
+            String passwordEncriptado = encriptarContraseña(passwordReal);
+            comando.setString(1, passwordEncriptado);
+            
+            try (ResultSet rs = comando.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; 
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al verificar clave duplicada: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    public void inicializarAdministradorDefecto() {
+        String sqlCheck = "SELECT COUNT(*) FROM Usuarios";
+        
+        try (Connection conexion = factory.getConexion();
+             PreparedStatement cmdCheck = conexion.prepareStatement(sqlCheck);
+             ResultSet rs = cmdCheck.executeQuery()) {
+            
+            // Si el conteo es 0, la tabla está completamente vacía (instalación limpia)
+            if (rs.next() && rs.getInt(1) == 0) {
+                System.out.println("Base de datos sin usuarios. Instalando administrador principal...");
+                
+                // Generamos el primer usuario administrador
+                registrarUsuario("SairTech", "d3jam33ntrar", "Administrador");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al verificar/crear el usuario inicial: " + e.getMessage());
+        }
+    }
 }

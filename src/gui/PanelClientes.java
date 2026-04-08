@@ -22,6 +22,8 @@ public class PanelClientes extends javax.swing.JPanel {
             lista = dao.buscar(textoBusqueda);
         }
         
+        java.util.Collections.reverse(lista);
+        
         javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {

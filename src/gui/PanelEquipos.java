@@ -401,6 +401,8 @@ public class PanelEquipos extends javax.swing.JPanel {
             lista = daoCliente.buscar(filtro);
         }
         
+        java.util.Collections.reverse(lista);
+        
         javax.swing.table.DefaultTableModel modeloTabla = new javax.swing.table.DefaultTableModel(
             new Object[]{"ID", "Identidad", "Cliente"}, 0
         ) {
